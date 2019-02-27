@@ -3,3 +3,5 @@ proto:
 
 clean:
 	rm **/**.pb.go
+
+.PHONY: proto

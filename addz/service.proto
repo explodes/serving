@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package addz;
+
+import "proto/address.proto";
+
+option go_package = "github.com/explodes/serving/addz";
+
+message AddzConfig {
+  .serving.Address bind_address = 1;
+  .serving.Address json_bind_address = 2;
+  .serving.Address logz_address = 3;
+  .serving.Address expz_address = 4;
+}
+
+message AddRequest {
+  int64 cookie = 1;
+  repeated int64 values = 2;
+}
+
+message AddResponse {
+  int64 result = 1;
+}
+
+message SubtractRequest {
+  int64 cookie = 1;
+  repeated int64 values = 2;
+}
+
+message SubtractResponse {
+  int64 result = 1;
+}
+
+service AddzService {
+  rpc Add (AddRequest) returns (AddResponse) {
+  }
+  rpc Subtract (SubtractRequest) returns (SubtractResponse) {
+  }
+}

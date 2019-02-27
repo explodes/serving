@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package statusz;
+
+import "proto/time.proto";
+
+option go_package = "github.com/explodes/serving/statusz";
+
+message Status {
+  .serving.Timestamp timestamp = 1;
+  repeated MetricGroup groups = 2;
+}
+
+message MetricGroup {
+  string name = 1;
+  repeated Metric metrics = 3;
+}
+
+message Metric {
+  string name = 1;
+  oneof value {
+    int64 i64 = 2;
+    uint64 u64 = 3;
+    double f64 = 4;
+    string string = 5;
+    bool bool = 6;
+    .serving.Duration duration = 7;
+  }
+}

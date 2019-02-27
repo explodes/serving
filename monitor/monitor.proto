@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package monitor;
+
+import "proto/address.proto";
+import "proto/time.proto";
+
+option go_package = "github.com/explodes/serving/monitor";
+
+message Config {
+  message Service {
+    string name = 1;
+
+    .serving.Address address = 2;
+
+    .serving.Duration update_frequency = 3;
+
+    .serving.Duration timeout = 4;
+  }
+
+  repeated Service services = 1;
+
+}

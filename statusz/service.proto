@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package statusz;
+
+import "statusz/statusz.proto";
+
+option go_package = "github.com/explodes/serving/statusz";
+
+service StatuszService {
+  rpc GetStatus (GetStatusRequest) returns (GetStatusResponse) {
+  }
+}
+
+message GetStatusRequest {
+}
+message GetStatusResponse {
+  Status status = 1;
+}

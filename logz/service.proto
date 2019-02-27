@@ -2,18 +2,13 @@ syntax = "proto3";
 
 package logz;
 
-import "serving.proto";
 import "logz/logz.proto";
+import "proto/address.proto";
 
 option go_package = "github.com/explodes/serving/logz";
 
-service LogzService {
-  rpc Record (RecordRequest) returns (RecordResponse) {
-  }
-}
-
 message ServiceConfig {
-  .serving.BindAddress bind_address = 1;
+  .serving.Address bind_address = 1;
 }
 
 message RecordRequest {
@@ -22,4 +17,9 @@ message RecordRequest {
 }
 
 message RecordResponse {
+}
+
+service LogzService {
+  rpc Record (RecordRequest) returns (RecordResponse) {
+  }
 }

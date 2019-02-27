@@ -2,35 +2,46 @@ syntax = "proto3";
 
 package logz;
 
-import "serving.proto";
+import "proto/time.proto";
+import "third_party/google/protobuf/any.proto";
 
 option go_package = "github.com/explodes/serving/logz";
 
+enum Level {
+  UNKNOWN = 0;
+  DEBUG = 1;
+  INFO = 2;
+  WARN = 3;
+  ERROR = 4;
+}
+
 message Entry {
+  // When the entry occurred.
   .serving.Timestamp timestamp = 1;
 
-  enum Level {
-    UNKNOWN = 0;
-    DEBUG = 1;
-    INFO = 2;
-    WARN = 3;
-    ERROR = 4;
-  }
-  Level level = 2;
+  // Optional time when the entry ended.
+  .serving.Timestamp end_timestamp = 2;
 
-  string type = 3;
+  // Level of the log.
+  Level level = 3;
 
+  // Log message.
   string message = 4;
+
+  // Any additional information to record.
+  .google.protobuf.Any ext = 5;
 }
 
 message Frame {
+  // ID of and end-to-end series of RPCs.
+  string stack_id = 1;
 
-  message ServerID {
-    string name = 1;
+  // ID of an individual RPC.
+  string operation_id = 2;
 
-    string instance = 2;
-  }
-  ServerID server_id = 1;
+  // Name of an individual RPC.
+  string operation_name = 3;
 
-  Frame parent = 2;
+  // Parent operation ID of an individual RPC.
+  string parent_operation_id = 4;
 }

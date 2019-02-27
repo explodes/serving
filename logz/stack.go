@@ -3,54 +3,74 @@ package logz
 import (
 	"context"
 	"errors"
-	"github.com/explodes/serving"
+	spb "github.com/explodes/serving/proto"
+	"github.com/satori/go.uuid"
 	"google.golang.org/grpc/metadata"
 )
 
 const (
-	stackMetadata = "stackz"
+	frameMetadataKey = "logz-frame"
 )
 
 var (
-	errStackMetadataNotFound = errors.New("stack metadata not found")
+	errFrameMetadataNotFound = errors.New("frame metadata not found")
 )
 
-// PutNewStackInOutgoingContext creates a new Frame and puts it into a Context for outgoing RPCs.
-func PutNewStackInOutgoingContext(ctx context.Context, parent *Frame, id *ServerID) (context.Context, error){
-	stack := StackForOutgoingContext(parent, id)
-	return PutStackInOutgoingContext(ctx, stack)
+// PutNewFrameInOutgoingContext creates a new Frame and puts it into a Context for outgoing RPCs.
+func PutNewFrameInOutgoingContext(ctx context.Context, parent *Frame, operationName string) (context.Context, error) {
+	frame := FrameForOutgoingContext(parent, operationName)
+	return PutFrameInOutgoingContext(ctx, frame)
 }
 
-// PutStackInOutgoingContext puts a Frame into a Context for outgoing RPCs.
-func PutStackInOutgoingContext(ctx context.Context, stack *Frame) (context.Context, error){
-	s, err := serving.SerializeProtoBase64(stack)
+// PutFrameInOutgoingContext puts a Frame into a Context for outgoing RPCs.
+func PutFrameInOutgoingContext(ctx context.Context, frame *Frame) (context.Context, error) {
+	s, err := spb.SerializeProtoBase64(frame)
 	if err != nil {
 		return nil, err
 	}
-	ctx = metadata.AppendToOutgoingContext(ctx, stackMetadata, s)
+	ctx = metadata.AppendToOutgoingContext(ctx, frameMetadataKey, s)
 	return ctx, nil
 }
 
-// StackForOutgoingContext creates a Frame for outgoing RPCs.
-func StackForOutgoingContext(parent *Frame, id *ServerID) *Frame {
+// FrameForOutgoingContext creates a Frame for outgoing RPCs.
+func FrameForOutgoingContext(parent *Frame, operationName string) *Frame {
+	var stackID, parentOperationID string
+	if parent == nil {
+		stackID = getUuid()
+		parentOperationID = ""
+
+	} else {
+		stackID = parent.StackId
+		parentOperationID = parent.OperationId
+	}
 	return &Frame{
-		ServerId:     id,
-		Parent: parent,
+		StackId:           stackID,
+		OperationId:       getUuid(),
+		ParentOperationId: parentOperationID,
+		OperationName:     operationName,
 	}
 }
 
-// StackFromIncomingContext gets a stack from incoming RPCs so that it can be logged or forwarded to
+// FrameFromIncomingContext gets a stack from incoming RPCs so that it can be logged or forwarded to
 // outgoing RPCs as a parent.
-func StackFromIncomingContext(ctx context.Context) (*Stack, error){
+func FrameFromIncomingContext(ctx context.Context) (*Frame, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil,errStackMetadataNotFound
+		return nil, nil
 	}
-	serializedStackStrings, ok := md[stackMetadata]
-	if !ok || len(serializedStackStrings) == 0 {
-		return nil,errStackMetadataNotFound
+	serializedFrame, ok := md[frameMetadataKey]
+	if !ok || len(serializedFrame) == 0 {
+		return nil, nil
 	}
-	stack := &Stack{}
-	err := serving.DeserializeProtoBase64(serializedStackStrings[0], stack)
-	return stack, err
+	frame := &Frame{}
+	err := spb.DeserializeProtoBase64(serializedFrame[0], frame)
+	return frame, err
+}
+
+func getUuid() string {
+	id, err := uuid.NewV4()
+	if err != nil {
+		return ""
+	}
+	return id.String()
 }

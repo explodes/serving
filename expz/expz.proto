@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package expz;
+
+option go_package = "github.com/explodes/serving/expz";
+
+message FeatureDeclaration {
+  string name = 1;
+  string doc = 2;
+  Flag default_value = 3;
+}
+
+message Features {
+  map<string, Flag> flags = 1;
+}
+
+message Flag {
+  // Value of this flag.
+  oneof flag {
+    int64 i64 = 1;
+    double f64 = 2;
+    string string = 3;
+    bool bool = 4;
+  }
+}

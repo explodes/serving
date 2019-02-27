@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package serving;
+
+option go_package = "github.com/explodes/serving/proto";
+
+message Timestamp {
+  oneof unit {
+    int64 nanoseconds = 1;
+    int64 milliseconds = 2;
+    int64 seconds = 3;
+  }
+}
+
+message Duration {
+  oneof unit {
+    int64 nanoseconds = 1;
+    int64 milliseconds = 2;
+    int64 seconds = 3;
+  }
+}

@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package expz;
+
+import "expz/expz.proto";
+import "proto/address.proto";
+
+option go_package = "github.com/explodes/serving/expz";
+
+message ExpzConfig {
+
+  .serving.Address bind_address = 1;
+  .serving.Address logz_address = 2;
+
+  repeated FeatureDeclaration default_features = 3;
+
+  message ExperimentalFeatures {
+    string name = 1;
+
+    string doc = 2;
+
+    // A range within [0, 999] representing which mods should receive the feature set.
+    message Mods {
+      uint32 min = 1;
+      uint32 max = 2;
+    }
+    Mods mods = 3;
+
+    Features features = 4;
+  }
+  repeated ExperimentalFeatures experimental_features = 4;
+}
+
+message GetExperimentsRequest {
+  int64 cookie = 1;
+}
+
+message GetExperimentsResponse {
+  Features features = 1;
+}
+
+service ExpzService {
+  rpc GetExperiments (GetExperimentsRequest) returns (GetExperimentsResponse) {
+  }
+}
