@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package logz;
+
+import "serving.proto";
+
+option go_package = "github.com/explodes/serving/logz";
+
+message Entry {
+  .serving.Timestamp timestamp = 1;
+
+  enum Level {
+    UNKNOWN = 0;
+    DEBUG = 1;
+    INFO = 2;
+    WARN = 3;
+    ERROR = 4;
+  }
+  Level level = 2;
+
+  string type = 3;
+
+  string message = 4;
+}
+
+message Frame {
+
+  message ServerID {
+    string name = 1;
+
+    string instance = 2;
+  }
+  ServerID server_id = 1;
+
+  Frame parent = 2;
+}

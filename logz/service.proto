@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package logz;
+
+import "serving.proto";
+import "logz/logz.proto";
+
+option go_package = "github.com/explodes/serving/logz";
+
+service LogzService {
+  rpc Record (RecordRequest) returns (RecordResponse) {
+  }
+}
+
+message ServiceConfig {
+  .serving.BindAddress bind_address = 1;
+}
+
+message RecordRequest {
+  Frame stack = 1;
+  repeated Entry entries = 2;
+}
+
+message RecordResponse {
+}
