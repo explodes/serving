@@ -35,7 +35,7 @@ func main() {
 	}
 	log.Printf("expz listening on %s", addr)
 
-	logzClient, err := logz.NewClient(config.LogzAddress)
+	logzClient, err := logz.NewClient(config.LogzAddress.Address())
 	if err != nil {
 		log.Fatalf("error connecting to logz: %v", err)
 	}

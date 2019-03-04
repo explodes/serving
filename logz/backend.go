@@ -47,6 +47,11 @@ func (cb *consoleBackend) recordEntry(stack *Frame, entry *Entry) {
 		)
 	}
 
+	if color.NoColor {
+		log.Print(message)
+		return
+	}
+
 	var c color.Attribute
 	switch entry.Level {
 	case Level_DEBUG:

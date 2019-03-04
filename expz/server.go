@@ -2,8 +2,8 @@ package expz
 
 import (
 	"github.com/explodes/serving/logz"
+	spb "github.com/explodes/serving/proto"
 	"github.com/explodes/serving/statusz"
-	"github.com/explodes/serving/userz"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
@@ -41,7 +41,7 @@ func (s *expzServer) GetExperiments(ctx context.Context, req *GetExperimentsRequ
 	frame = logz.FrameForOutgoingContext(frame, "Expz.GetExperiments")
 	defer s.logz.Defer(frame, logz.Level_INFO, "request").Send()
 
-	hash, err := userz.CookieHash(req.Cookie)
+	hash, err := spb.CookieHash(req.Cookie)
 	if err != nil {
 		s.logz.Errorf(frame, "error deserializing cookie: %v", err)
 		return nil, errors.New("cookie error")

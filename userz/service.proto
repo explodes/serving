@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package userz;
+
+import "proto/serialization.proto";
+import "proto/address.proto";
+
+option go_package = "github.com/explodes/serving/userz";
+
+message UserzConfig {
+  .serving.Address bind_address = 1;
+  .serving.Address json_bind_address = 2;
+  .serving.Address logz_address = 3;
+  .serving.Address expz_address = 4;
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  message LoginSuccess {
+    string cookie = 1 [(.serving.serialization_of) = ".serving.Cookie"];
+  }
+  message LoginFailure {
+    enum Reason {
+      UNKNOWN = 0;
+      BAD_LOGIN = 1;
+    }
+    Reason reason = 1;
+  }
+  oneof result {
+    LoginSuccess success = 1;
+    LoginFailure failure = 2;
+  }
+}
+
+message ValidateRequest {
+  string cookie = 1 [(.serving.serialization_of) = ".serving.Cookie"];
+}
+
+message ValidateResponse {
+  enum ValidateResult {
+    UNKNOWN = 0;
+    SUCCESS = 1;
+    INVALID = 2;
+  }
+  ValidateResult result = 1;
+}
+
+service UserzService {
+  rpc Login (LoginRequest) returns (LoginResponse) {
+  }
+
+  rpc Validate (ValidateRequest) returns (ValidateResponse) {
+  }
+}

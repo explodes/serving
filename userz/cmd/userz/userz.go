@@ -3,12 +3,11 @@ package main
 import (
 	"flag"
 	"github.com/explodes/serving"
-	"github.com/explodes/serving/addz"
+	"github.com/explodes/serving/userz"
 	"github.com/explodes/serving/expz"
 	"github.com/explodes/serving/jsonpb"
 	"github.com/explodes/serving/logz"
 	"github.com/explodes/serving/statusz"
-	"github.com/explodes/serving/userz"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -22,7 +21,7 @@ var (
 func main() {
 	flag.Parse()
 
-	config := &addz.AddzConfig{}
+	config := &userz.UserzConfig{}
 	if err := serving.ReadConfigFile(*configFlag, config); err != nil {
 		log.Fatalf("error reading config file: %v", err)
 	}
@@ -43,29 +42,24 @@ func main() {
 		log.Fatalf("error connecting to expz: %v", err)
 	}
 
-	userzClient, err := userz.NewClient(config.UserzAddress.Address())
-	if err != nil {
-		log.Fatalf("error connecting to expz: %v", err)
-	}
-
-	addzServer := addz.NewAddzServer(logzClient, expzClient, userzClient)
+	userzServer := userz.NewUserzServer(logzClient, expzClient)
 	statuzServer := statusz.NewStatuszServer()
 
 	if config.JsonBindAddress != nil {
 		go func() {
 			log.Printf("Serving JSON at %s...\n", config.JsonBindAddress.Address())
 			log.Printf("Serving status page at %s/statusz\n", config.JsonBindAddress.Address())
-			if err := jsonpb.ServeJson(config.JsonBindAddress, addzServer, statuzServer); err != nil {
+			if err := jsonpb.ServeJson(config.JsonBindAddress, userzServer, statuzServer); err != nil {
 				log.Fatal(err)
 			}
 		}()
 	}
 
 	grpcServer := grpc.NewServer()
-	addz.RegisterAddzServiceServer(grpcServer, addzServer)
+	userz.RegisterUserzServiceServer(grpcServer, userzServer)
 	statusz.RegisterStatuszServiceServer(grpcServer, statuzServer)
 
-	log.Printf("addz listening on %s...", addr)
+	log.Printf("userz listening on %s...", addr)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("serving error: %v", err)
 	}

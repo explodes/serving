@@ -1,4 +1,4 @@
-package userz
+package proto
 
 import (
 	"encoding/base64"

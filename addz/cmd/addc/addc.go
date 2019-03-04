@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"flag"
 	"github.com/explodes/serving/addz"
 	"github.com/explodes/serving/userz"
 	"google.golang.org/grpc"
@@ -11,39 +11,52 @@ import (
 	"time"
 )
 
+const (
+	defaultLoopFrequency = 10 * time.Second
+)
+
+var (
+	flagAddzAddr  = flag.String("addz", "0.0.0.0:4003", "addz server address")
+	flagUserzAddr = flag.String("userz", "0.0.0.0:4004", "userz server address")
+	flagLoopFrq   = flag.Duration("frq", defaultLoopFrequency, "loop frequency")
+)
+
 func main() {
-	conn, err := grpc.Dial("0.0.0.0:4003", grpc.WithInsecure())
+	flag.Parse()
+	conn, err := grpc.Dial(*flagAddzAddr, grpc.WithInsecure())
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer mustClose(conn)
 
-	client := addz.NewAddzServiceClient(conn)
+	addzClient := addz.NewAddzServiceClient(conn)
+	userzClient, err := userz.NewClient(*flagUserzAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	values := []int64{2, 3, 4}
 
 	cookieInt := 0
 
 	for {
-		cookie := &userz.Cookie{
-			SessionId: fmt.Sprint(cookieInt),
-		}
-		cookieStr, err := userz.SerializeCookie(cookie)
+		cookieStr, err := userzClient.Login(context.Background(), "test", "test")
 		if err != nil {
-			log.Fatalf("cookie failure: %v", err)
+			log.Fatal(err)
+			<-time.After(*flagLoopFrq)
+			continue
 		}
-
 		req := &addz.SubtractRequest{Cookie: cookieStr, Values: values}
 		now := time.Now()
-		res, err := client.Subtract(context.Background(), req)
+		res, err := addzClient.Subtract(context.Background(), req)
 		then := time.Now()
 		if err != nil {
-			log.Printf("Subtract ERROR: %v (cookie=%s)", err, cookieStr)
+			log.Printf("Subtract ERROR: %v", err)
 		} else {
 			log.Printf("Subtract: %d (cookie=%s) (%s)", res.Result, cookieStr, then.Sub(now))
 		}
 		cookieInt++
-		<-time.After(800 * time.Millisecond)
+		<-time.After(*flagLoopFrq)
 	}
 }
 

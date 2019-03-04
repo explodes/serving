@@ -2,19 +2,18 @@ package expz
 
 import (
 	"context"
-	spb "github.com/explodes/serving/proto"
 	"google.golang.org/grpc"
 	"sync"
 )
 
 type Client struct {
 	clientMu *sync.RWMutex
-	addr     *spb.Address
+	addr     string
 	conn     *grpc.ClientConn
 	expz     ExpzServiceClient
 }
 
-func NewClient(addr *spb.Address) (*Client, error) {
+func NewClient(addr string) (*Client, error) {
 	client := &Client{
 		clientMu: &sync.RWMutex{},
 		addr:     addr,
@@ -36,7 +35,7 @@ func (c *Client) restoreClient() error {
 		c.conn = nil
 		c.expz = nil
 	}
-	conn, err := grpc.Dial(c.addr.Address(), grpc.WithInsecure())
+	conn, err := grpc.Dial(c.addr, grpc.WithInsecure())
 	if err != nil {
 		return err
 	}

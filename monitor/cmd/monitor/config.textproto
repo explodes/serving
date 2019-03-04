@@ -5,7 +5,7 @@ services {
     port: 4001
   }
   update_frequency {
-    seconds: 3
+    milliseconds: 5000
   }
   timeout {
     seconds: 10
@@ -18,7 +18,7 @@ services {
     port: 4002
   }
   update_frequency {
-    seconds: 3
+    milliseconds: 5000
   }
   timeout {
     seconds: 10
@@ -31,7 +31,20 @@ services {
     port: 4003
   }
   update_frequency {
-    milliseconds: 3000
+    milliseconds: 5000
+  }
+  timeout {
+    seconds: 10
+  }
+}
+services {
+  name: "userz"
+  address {
+    host: "0.0.0.0"
+    port: 4004
+  }
+  update_frequency {
+    milliseconds: 5000
   }
   timeout {
     seconds: 10

@@ -32,7 +32,7 @@ func (s *statuszServer) GetStatus(ctx context.Context, req *GetStatusRequest) (*
 	}
 	res := &GetStatusResponse{
 		Status: &Status{
-			Timestamp: spb.Now(),
+			Timestamp: spb.TimestampNow(),
 			Groups:    groups,
 		},
 	}

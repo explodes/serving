@@ -2,6 +2,7 @@ package serving
 
 import (
 	"fmt"
+	"github.com/fatih/color"
 	"log"
 	"os"
 	"time"
@@ -14,6 +15,7 @@ func (w logWriter) Write(bytes []byte) (int, error) {
 }
 
 func init() {
+	color.NoColor = false
 	log.SetFlags(0)
 	log.SetOutput(new(logWriter))
 }

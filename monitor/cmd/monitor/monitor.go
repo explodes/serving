@@ -77,6 +77,10 @@ func monitorService(ctx context.Context, fgColor color.Attribute, service *monit
 
 	colorBuff := color.New(fgColor)
 
+	updateNanos := service.UpdateFrequency.Duration().Nanoseconds()
+	randomNanos := time.Nanosecond * time.Duration(rand.Int63n(updateNanos))
+	<-time.After(randomNanos)
+
 	for {
 		buf.Reset()
 
@@ -105,7 +109,6 @@ func monitorService(ctx context.Context, fgColor color.Attribute, service *monit
 			buf.WriteRune('\n')
 			colorPrint(colorBuff, buf)
 		}
-
 
 		select {
 		case <-time.After(service.UpdateFrequency.Duration()):

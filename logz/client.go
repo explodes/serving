@@ -16,17 +16,19 @@ type frameEntry struct {
 
 type Client struct {
 	clientMu *sync.RWMutex
-	addr     *spb.Address
+	addr     string
 	conn     *grpc.ClientConn
 	logz     LogzServiceClient
 	entries  chan frameEntry
+	console  Backend
 }
 
-func NewClient(addr *spb.Address) (*Client, error) {
+func NewClient(addr string) (*Client, error) {
 	client := &Client{
 		clientMu: &sync.RWMutex{},
 		addr:     addr,
 		entries:  make(chan frameEntry),
+		console:  NewConsoleBackend(),
 	}
 	err := client.restoreClient()
 	if err != nil {
@@ -38,11 +40,14 @@ func NewClient(addr *spb.Address) (*Client, error) {
 
 func (c *Client) loop() {
 	for frameEntry := range c.entries {
-		_, err := c.logz.Record(context.Background(), &RecordRequest{
+		req := &RecordRequest{
 			Stack:   frameEntry.frame,
 			Entries: []*Entry{frameEntry.entry},
-		})
-		if err != nil {
+		}
+		if err := c.console.Record(req); err != nil {
+			log.Printf("error logging to console: %v", err)
+		}
+		if _, err := c.logz.Record(context.Background(), req); err != nil {
 			log.Printf("error sending log: %v", err)
 		}
 	}
@@ -58,7 +63,7 @@ func (c *Client) restoreClient() error {
 		c.conn = nil
 		c.logz = nil
 	}
-	conn, err := grpc.Dial(c.addr.Address(), grpc.WithInsecure())
+	conn, err := grpc.Dial(c.addr, grpc.WithInsecure())
 	if err != nil {
 		return err
 	}
@@ -71,7 +76,7 @@ func (c *Client) makeEntry(level Level, message string) *Entry {
 	return &Entry{
 		Level:     level,
 		Message:   message,
-		Timestamp: spb.Now(),
+		Timestamp: spb.TimestampNow(),
 	}
 }
 
@@ -133,6 +138,6 @@ type DeferredLog struct {
 }
 
 func (d *DeferredLog) Send() {
-	d.frameEntry.entry.EndTimestamp = spb.Now()
+	d.frameEntry.entry.EndTimestamp = spb.TimestampNow()
 	d.logz.queueEntry(d.frameEntry.frame, d.frameEntry.entry)
 }

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package serving;
+
+import "proto/time.proto";
+
+option go_package = "github.com/explodes/serving/proto";
+
+message Cookie {
+  .serving.Timestamp creation_time = 1;
+  .serving.Timestamp expiration_time = 2;
+  string session_id = 3;
+  string user_id = 4;
+}

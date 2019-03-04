@@ -6,7 +6,7 @@ import (
 
 func NewEntry(level Level, message string) *Entry {
 	return &Entry{
-		Timestamp: spb.Now(),
+		Timestamp: spb.TimestampNow(),
 		Level:     level,
 		Message:   message,
 	}

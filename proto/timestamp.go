@@ -2,11 +2,14 @@ package proto
 
 import "time"
 
-func Now() *Timestamp {
-	now := time.Now()
+func TimestampNow() *Timestamp {
+	return TimestampTime(time.Now())
+}
+
+func TimestampTime(t time.Time) *Timestamp {
 	return &Timestamp{
 		Unit: &Timestamp_Nanoseconds{
-			Nanoseconds: now.UnixNano(),
+			Nanoseconds: t.UnixNano(),
 		},
 	}
 }

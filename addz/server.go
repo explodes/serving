@@ -5,6 +5,7 @@ import (
 	"github.com/explodes/serving/expz"
 	"github.com/explodes/serving/logz"
 	"github.com/explodes/serving/statusz"
+	"github.com/explodes/serving/userz"
 	"github.com/pkg/errors"
 	"time"
 )
@@ -22,15 +23,17 @@ func registerAddzStatusz() {
 }
 
 type addzServer struct {
-	expz *expz.Client
-	logz *logz.Client
+	expz  *expz.Client
+	logz  *logz.Client
+	userz *userz.Client
 }
 
-func NewAddzServer(logz *logz.Client, expz *expz.Client) AddzServiceServer {
+func NewAddzServer(logz *logz.Client, expz *expz.Client, userz *userz.Client) AddzServiceServer {
 	registerAddzStatusz()
 	return &addzServer{
-		expz: expz,
-		logz: logz,
+		expz:  expz,
+		logz:  logz,
+		userz: userz,
 	}
 }
 
@@ -40,7 +43,7 @@ type deps struct {
 	log   *logz.DeferredLog
 }
 
-func (s *addzServer) mathDeps(requestContext context.Context, operation string, cookie string) (*deps, error) {
+func (s *addzServer) getDeps(requestContext context.Context, operation string, cookie string) (*deps, error) {
 	frame, err := logz.FrameFromIncomingContext(requestContext)
 	if err != nil {
 		s.logz.Errorf(frame, "error getting frame: %v", err)
@@ -48,6 +51,15 @@ func (s *addzServer) mathDeps(requestContext context.Context, operation string, 
 	}
 	frame = logz.FrameForOutgoingContext(frame, operation)
 	log := s.logz.Defer(frame, logz.Level_INFO, "request")
+
+	validUser, err := s.userz.Validate(requestContext, cookie)
+	if err != nil {
+		s.logz.Errorf(frame, "unable to validate login: %v", err)
+		return nil, errors.Wrap(err, "unable to validate login")
+	} else if !validUser {
+		s.logz.Debugf(frame, "invalid login")
+		return nil, errors.New("invalid login")
+	}
 
 	expzCtx, _ := context.WithTimeout(context.Background(), 1*time.Second)
 	expzCtx, err = logz.PutFrameInOutgoingContext(expzCtx, frame)
@@ -71,7 +83,7 @@ func (s *addzServer) mathDeps(requestContext context.Context, operation string, 
 func (s *addzServer) Add(requestContext context.Context, req *AddRequest) (*AddResponse, error) {
 	defer varAdd.Start().End()
 
-	deps, err := s.mathDeps(requestContext, "Addz.Add", req.Cookie)
+	deps, err := s.getDeps(requestContext, "Addz.Add", req.Cookie)
 	if err != nil {
 		return nil, err
 	}
@@ -94,11 +106,19 @@ func (s *addzServer) Add(requestContext context.Context, req *AddRequest) (*AddR
 func (s *addzServer) Subtract(requestContext context.Context, req *SubtractRequest) (*SubtractResponse, error) {
 	defer varSubtract.Start().End()
 
-	deps, err := s.mathDeps(requestContext, "Addz.Subtract", req.Cookie)
+	deps, err := s.getDeps(requestContext, "Addz.Subtract", req.Cookie)
 	if err != nil {
 		return nil, err
 	}
-	defer deps.log.Send()
+	defer func() {
+		if deps == nil {
+			panic("nil deps")
+		}
+		if deps.log == nil {
+			panic("nil log")
+		}
+		deps.log.Send()
+	}()
 
 	var sum int64
 	for _, v := range req.Values {
