@@ -56,7 +56,7 @@ func (s *userzServer) getDeps(requestContext context.Context, operation string, 
 		return nil, errors.Wrap(err, "unable to read incoming frame")
 	}
 	frame = logz.FrameForOutgoingContext(frame, operation)
-	log := s.logz.Defer(frame, logz.Level_INFO, "request")
+	log := s.logz.DeferRequestLog(frame)
 
 	expzCtx, _ := context.WithTimeout(context.Background(), 1*time.Second)
 	expzCtx, err = logz.PutFrameInOutgoingContext(expzCtx, frame)

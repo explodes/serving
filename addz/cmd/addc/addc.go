@@ -46,6 +46,8 @@ func main() {
 			<-time.After(*flagLoopFrq)
 			continue
 		}
+		log.Printf("got cookie %s", cookieStr)
+
 		req := &addz.SubtractRequest{Cookie: cookieStr, Values: values}
 		now := time.Now()
 		res, err := addzClient.Subtract(context.Background(), req)
@@ -53,7 +55,7 @@ func main() {
 		if err != nil {
 			log.Printf("Subtract ERROR: %v", err)
 		} else {
-			log.Printf("Subtract: %d (cookie=%s) (%s)", res.Result, cookieStr, then.Sub(now))
+			log.Printf("Subtract: %d (%s)", res.Result, then.Sub(now))
 		}
 		cookieInt++
 		<-time.After(*flagLoopFrq)

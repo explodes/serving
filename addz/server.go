@@ -50,9 +50,11 @@ func (s *addzServer) getDeps(requestContext context.Context, operation string, c
 		return nil, errors.Wrap(err, "unable to read incoming frame")
 	}
 	frame = logz.FrameForOutgoingContext(frame, operation)
-	log := s.logz.Defer(frame, logz.Level_INFO, "request")
+	log := s.logz.DeferRequestLog(frame)
 
-	validUser, err := s.userz.Validate(requestContext, cookie)
+	validateCtx, _ := context.WithTimeout(context.Background(), 1*time.Second)
+	validateCtx, err = logz.PutFrameInOutgoingContext(validateCtx, frame)
+	validUser, err := s.userz.Validate(validateCtx, cookie)
 	if err != nil {
 		s.logz.Errorf(frame, "unable to validate login: %v", err)
 		return nil, errors.Wrap(err, "unable to validate login")

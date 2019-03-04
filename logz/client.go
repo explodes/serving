@@ -123,6 +123,10 @@ func (c *Client) queueEntry(frame *Frame, entry *Entry) {
 	}()
 }
 
+func (c *Client) DeferRequestLog(frame *Frame) *DeferredLog {
+	return c.Defer(frame, Level_INFO, "BuildResponse")
+}
+
 func (c *Client) Defer(frame *Frame, level Level, message string) *DeferredLog {
 	entry := c.makeEntry(level, message)
 	return &DeferredLog{
