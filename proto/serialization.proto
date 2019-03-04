@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package serving;
+
+import "third_party/google/protobuf/descriptor.proto";
+
+option go_package = "github.com/explodes/serving/proto";
+
+extend google.protobuf.FieldOptions {
+  string serialization_of = 50000;
+}

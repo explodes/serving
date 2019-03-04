@@ -2,7 +2,6 @@ package addz
 
 import (
 	"context"
-	"fmt"
 	"github.com/explodes/serving/expz"
 	"github.com/explodes/serving/logz"
 	"github.com/explodes/serving/statusz"
@@ -41,9 +40,10 @@ type deps struct {
 	log   *logz.DeferredLog
 }
 
-func (s *addzServer) mathDeps(requestContext context.Context, operation string, cookie int64) (*deps, error) {
+func (s *addzServer) mathDeps(requestContext context.Context, operation string, cookie string) (*deps, error) {
 	frame, err := logz.FrameFromIncomingContext(requestContext)
 	if err != nil {
+		s.logz.Errorf(frame, "error getting frame: %v", err)
 		return nil, errors.Wrap(err, "unable to read incoming frame")
 	}
 	frame = logz.FrameForOutgoingContext(frame, operation)
@@ -52,13 +52,20 @@ func (s *addzServer) mathDeps(requestContext context.Context, operation string, 
 	expzCtx, _ := context.WithTimeout(context.Background(), 1*time.Second)
 	expzCtx, err = logz.PutFrameInOutgoingContext(expzCtx, frame)
 	if err != nil {
+		s.logz.Errorf(frame, "unable to update frame: %v", err)
 		return nil, errors.Wrap(err, "unable to update frame")
 	}
 	exps, err := s.expz.GetExperiments(expzCtx, cookie)
 	if err != nil {
+		s.logz.Errorf(frame, "unable to get experiments: %v", err)
 		return nil, errors.Wrap(err, "unable to get experiments")
 	}
-	return &deps{frame: frame, exps: exps, log: log}, nil
+	d := &deps{
+		frame: frame,
+		exps:  exps,
+		log:   log,
+	}
+	return d, nil
 }
 
 func (s *addzServer) Add(requestContext context.Context, req *AddRequest) (*AddResponse, error) {
@@ -71,7 +78,7 @@ func (s *addzServer) Add(requestContext context.Context, req *AddRequest) (*AddR
 	defer deps.log.Send()
 
 	extraAddition := deps.exps.Int64Value("extra_addition", 0)
-	s.logz.Log(deps.frame, logz.Level_DEBUG, fmt.Sprintf("extra_addition=%d", extraAddition))
+	s.logz.Debugf(deps.frame, "extra_addition=%d", extraAddition)
 
 	sum := extraAddition
 	for _, v := range req.Values {

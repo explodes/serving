@@ -3,6 +3,7 @@ syntax = "proto3";
 package statusz;
 
 import "statusz/statusz.proto";
+import "proto/serialization.proto";
 
 option go_package = "github.com/explodes/serving/statusz";
 
@@ -12,7 +13,9 @@ service StatuszService {
 }
 
 message GetStatusRequest {
+  string cookie = 1 [(.serving.serialization_of) = ".serving.Cookie"];
 }
+
 message GetStatusResponse {
   Status status = 1;
 }

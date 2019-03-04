@@ -2,6 +2,7 @@ package logz
 
 import (
 	"context"
+	"fmt"
 	spb "github.com/explodes/serving/proto"
 	"google.golang.org/grpc"
 	"log"
@@ -74,12 +75,44 @@ func (c *Client) makeEntry(level Level, message string) *Entry {
 	}
 }
 
-func (c *Client) Log(frame *Frame, level Level, message string) {
-	entry := c.makeEntry(level, message)
-	c.LogEntry(frame, entry)
+func (c *Client) Debug(frame *Frame, message string) {
+	c.log(frame, Level_DEBUG, message)
 }
 
-func (c *Client) LogEntry(frame *Frame, entry *Entry) {
+func (c *Client) Debugf(frame *Frame, message string, args ...interface{}) {
+	c.log(frame, Level_DEBUG, fmt.Sprintf(message, args...))
+}
+
+func (c *Client) Info(frame *Frame, message string) {
+	c.log(frame, Level_INFO, message)
+}
+
+func (c *Client) Infof(frame *Frame, message string, args ...interface{}) {
+	c.log(frame, Level_INFO, fmt.Sprintf(message, args...))
+}
+
+func (c *Client) Warn(frame *Frame, message string) {
+	c.log(frame, Level_WARN, message)
+}
+
+func (c *Client) Warnf(frame *Frame, message string, args ...interface{}) {
+	c.log(frame, Level_WARN, fmt.Sprintf(message, args...))
+}
+
+func (c *Client) Error(frame *Frame, message string) {
+	c.log(frame, Level_ERROR, message)
+}
+
+func (c *Client) Errorf(frame *Frame, message string, args ...interface{}) {
+	c.log(frame, Level_ERROR, fmt.Sprintf(message, args...))
+}
+
+func (c *Client) log(frame *Frame, level Level, message string) {
+	entry := c.makeEntry(level, message)
+	c.queueEntry(frame, entry)
+}
+
+func (c *Client) queueEntry(frame *Frame, entry *Entry) {
 	go func() {
 		c.entries <- frameEntry{frame: frame, entry: entry}
 	}()
@@ -101,5 +134,5 @@ type DeferredLog struct {
 
 func (d *DeferredLog) Send() {
 	d.frameEntry.entry.EndTimestamp = spb.Now()
-	d.logz.LogEntry(d.frameEntry.frame, d.frameEntry.entry)
+	d.logz.queueEntry(d.frameEntry.frame, d.frameEntry.entry)
 }

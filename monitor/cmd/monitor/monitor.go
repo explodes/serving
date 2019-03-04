@@ -101,11 +101,11 @@ func monitorService(ctx context.Context, fgColor color.Attribute, service *monit
 				if err := compactTextMarshaller.Marshal(buf, res.Status); err != nil {
 					log.Fatalf("error print metric: %v", err)
 				}
-				buf.WriteRune('\n')
 			}
+			buf.WriteRune('\n')
+			colorPrint(colorBuff, buf)
 		}
 
-		colorPrint(colorBuff, buf)
 
 		select {
 		case <-time.After(service.UpdateFrequency.Duration()):

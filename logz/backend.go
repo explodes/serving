@@ -1,7 +1,10 @@
 package logz
 
 import (
+	"fmt"
+	"github.com/fatih/color"
 	"log"
+	"os"
 	"time"
 )
 
@@ -24,8 +27,9 @@ func (cb *consoleBackend) Record(request *RecordRequest) (err error) {
 }
 
 func (cb *consoleBackend) recordEntry(stack *Frame, entry *Entry) {
+	var message string
 	if entry.EndTimestamp == nil {
-		log.Printf("level=%-5s id=%-36s parent=%-36s operation=%-32s message=%s\n",
+		message = fmt.Sprintf("level=%-5s id=%-36s parent=%-36s operation=%-32s message=%s\n",
 			entry.Level,
 			stack.OperationId,
 			stack.ParentOperationId,
@@ -33,7 +37,7 @@ func (cb *consoleBackend) recordEntry(stack *Frame, entry *Entry) {
 			entry.Message,
 		)
 	} else {
-		log.Printf("level=%-5s id=%-36s parent=%-36s operation=%-32s duration=%-10s message=%s\n",
+		message = fmt.Sprintf("level=%-5s id=%-36s parent=%-36s operation=%-32s duration=%-10s message=%s\n",
 			entry.Level,
 			stack.OperationId,
 			stack.ParentOperationId,
@@ -41,5 +45,23 @@ func (cb *consoleBackend) recordEntry(stack *Frame, entry *Entry) {
 			time.Duration(entry.EndTimestamp.GetNanoseconds()-entry.Timestamp.GetNanoseconds()),
 			entry.Message,
 		)
+	}
+
+	var c color.Attribute
+	switch entry.Level {
+	case Level_DEBUG:
+		c = color.FgBlue
+	case Level_INFO:
+		c = color.FgGreen
+	case Level_WARN:
+		c = color.FgYellow
+	case Level_ERROR:
+		c = color.FgRed
+	default:
+		c = color.FgRed
+	}
+	_, err := color.New(c).Fprint(os.Stderr, message)
+	if err != nil {
+		log.Printf("error printing to stderr: %s", err)
 	}
 }

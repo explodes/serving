@@ -4,6 +4,7 @@ package logz;
 
 import "logz/logz.proto";
 import "proto/address.proto";
+import "proto/serialization.proto";
 
 option go_package = "github.com/explodes/serving/logz";
 
@@ -12,8 +13,9 @@ message ServiceConfig {
 }
 
 message RecordRequest {
-  Frame stack = 1;
-  repeated Entry entries = 2;
+  string cookie = 1 [(.serving.serialization_of) = ".serving.Cookie"];
+  Frame stack = 2;
+  repeated Entry entries = 3;
 }
 
 message RecordResponse {

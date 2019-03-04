@@ -5,6 +5,7 @@ import (
 	"github.com/explodes/serving"
 	"github.com/explodes/serving/logz"
 	"github.com/explodes/serving/statusz"
+	"github.com/fatih/color"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -12,10 +13,14 @@ import (
 
 var (
 	configFlag = flag.String("config", "config.textproto", "configuration file location")
+	colorFlag  = flag.Bool("color", true, "whether or not to print in colors")
 )
 
 func main() {
 	flag.Parse()
+
+	// Enable/disable color output
+	color.NoColor = !(*colorFlag)
 
 	config := &logz.ServiceConfig{}
 	if err := serving.ReadConfigFile(*configFlag, config); err != nil {

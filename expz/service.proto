@@ -4,6 +4,7 @@ package expz;
 
 import "expz/expz.proto";
 import "proto/address.proto";
+import "proto/serialization.proto";
 
 option go_package = "github.com/explodes/serving/expz";
 
@@ -32,7 +33,7 @@ message ExpzConfig {
 }
 
 message GetExperimentsRequest {
-  int64 cookie = 1;
+  string cookie = 1 [(.serving.serialization_of) = ".serving.Cookie"];
 }
 
 message GetExperimentsResponse {

@@ -45,7 +45,7 @@ func (c *Client) restoreClient() error {
 	return nil
 }
 
-func (c *Client) GetExperiments(ctx context.Context, cookie int64) (*ExperimentFlags, error) {
+func (c *Client) GetExperiments(ctx context.Context, cookie string) (*ExperimentFlags, error) {
 	req := &GetExperimentsRequest{Cookie: cookie}
 	res, err := c.expz.GetExperiments(ctx, req)
 	return &ExperimentFlags{res: res}, err

@@ -3,6 +3,7 @@ syntax = "proto3";
 package addz;
 
 import "proto/address.proto";
+import "proto/serialization.proto";
 
 option go_package = "github.com/explodes/serving/addz";
 
@@ -14,7 +15,7 @@ message AddzConfig {
 }
 
 message AddRequest {
-  int64 cookie = 1;
+  string cookie = 1 [(.serving.serialization_of) = ".serving.Cookie"];
   repeated int64 values = 2;
 }
 
@@ -23,7 +24,7 @@ message AddResponse {
 }
 
 message SubtractRequest {
-  int64 cookie = 1;
+  string cookie = 1 [(.serving.serialization_of) = ".serving.Cookie"];
   repeated int64 values = 2;
 }
 
