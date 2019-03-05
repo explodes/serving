@@ -1,10 +1,13 @@
 package userz
 
 import (
+	"encoding/hex"
+	"github.com/explodes/serving/cryptz"
 	"github.com/explodes/serving/expz"
 	"github.com/explodes/serving/logz"
 	spb "github.com/explodes/serving/proto"
 	"github.com/explodes/serving/statusz"
+	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
@@ -17,9 +20,10 @@ const (
 )
 
 type userzServer struct {
-	logz     *logz.Client
-	expz     *expz.Client
-	sessions *sessions
+	cookiePasscode string
+	logz           *logz.Client
+	expz           *expz.Client
+	sessions       *sessions
 }
 
 type deps struct {
@@ -40,12 +44,13 @@ func registerExpzStatusz() {
 	})
 }
 
-func NewUserzServer(logz *logz.Client, expz *expz.Client) UserzServiceServer {
+func NewUserzServer(cookiePasscode string, logz *logz.Client, expz *expz.Client) UserzServiceServer {
 	registerExpzStatusz()
 	return &userzServer{
-		logz:     logz,
-		expz:     expz,
-		sessions: newSessions(),
+		cookiePasscode: cookiePasscode,
+		logz:           logz,
+		expz:           expz,
+		sessions:       newSessions(),
 	}
 }
 
@@ -109,7 +114,7 @@ func (s *userzServer) Login(requestContext context.Context, req *LoginRequest) (
 		UserId:         uid,
 		SessionId:      getUuid(),
 	}
-	serialCookie, err := spb.SerializeCookie(cookie)
+	serialCookie, err := s.serializeCookie(cookie)
 	s.sessions.save(serialCookie, cookie)
 	if err != nil {
 		s.logz.Errorf(deps.frame, "unable to serialize cookie: %v", err)
@@ -154,6 +159,34 @@ func (s *userzServer) Validate(requestContext context.Context, req *ValidateRequ
 		Result: result,
 	}
 	return res, nil
+}
+
+func (s *userzServer) serializeCookie(cookie *spb.Cookie) (string, error) {
+	b, err := proto.Marshal(cookie)
+	if err != nil {
+		return "", errors.Wrap(err, "error serializing cookie")
+	}
+	b, err = cryptz.Encrypt(b, s.cookiePasscode)
+	if err != nil {
+		return "", errors.Wrap(err, "error encrypting cookie")
+	}
+	return hex.EncodeToString(b), nil
+}
+
+func (s *userzServer) deserializeCookie(serial string) (*spb.Cookie, error) {
+	b, err := hex.DecodeString(serial)
+	if err != nil {
+		return nil, errors.Wrap(err, "error decoding cookie")
+	}
+	b, err = cryptz.Decrypt(b, s.cookiePasscode)
+	if err != nil {
+		return nil, errors.Wrap(err, "error decrypting cookie")
+	}
+	cookie := &spb.Cookie{}
+	if err := proto.Unmarshal(b, cookie); err != nil {
+		return nil, errors.Wrap(err, "error unmarshalling cookie")
+	}
+	return cookie, nil
 }
 
 type sessions struct {

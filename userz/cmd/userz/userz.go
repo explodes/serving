@@ -3,15 +3,14 @@ package main
 import (
 	"flag"
 	"github.com/explodes/serving"
-	"github.com/explodes/serving/userz"
 	"github.com/explodes/serving/expz"
 	"github.com/explodes/serving/jsonpb"
 	"github.com/explodes/serving/logz"
 	"github.com/explodes/serving/statusz"
+	"github.com/explodes/serving/userz"
 	"google.golang.org/grpc"
 	"log"
 	"net"
-	"net/http"
 )
 
 var (
@@ -42,7 +41,7 @@ func main() {
 		log.Fatalf("error connecting to expz: %v", err)
 	}
 
-	userzServer := userz.NewUserzServer(logzClient, expzClient)
+	userzServer := userz.NewUserzServer(config.CookiePasscode, logzClient, expzClient)
 	statuzServer := statusz.NewStatuszServer()
 
 	if config.JsonBindAddress != nil {
@@ -64,16 +63,4 @@ func main() {
 		log.Fatalf("serving error: %v", err)
 	}
 
-}
-
-func combine(muxs ...*http.ServeMux) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		for _, mux := range muxs {
-			if handler, pattern := mux.Handler(r); pattern != "" {
-				handler.ServeHTTP(w, r)
-				return
-			}
-		}
-		http.NotFoundHandler().ServeHTTP(w, r)
-	})
 }
