@@ -9,10 +9,10 @@ import (
 	"github.com/explodes/serving/logz"
 	"github.com/explodes/serving/statusz"
 	"github.com/explodes/serving/userz"
+	"github.com/explodes/serving/utilz"
 	"google.golang.org/grpc"
 	"log"
 	"net"
-	"net/http"
 )
 
 var (
@@ -37,16 +37,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("error connecting to logz: %v", err)
 	}
+	utilz.RegisterGracefulShutdownCloser("logz-client", logzClient)
 
 	expzClient, err := expz.NewClient(config.ExpzAddress.Address())
 	if err != nil {
 		log.Fatalf("error connecting to expz: %v", err)
 	}
+	utilz.RegisterGracefulShutdownCloser("expz-client", expzClient)
 
 	userzClient, err := userz.NewClient(config.UserzAddress.Address())
 	if err != nil {
-		log.Fatalf("error connecting to expz: %v", err)
+		log.Fatalf("error connecting to userz: %v", err)
 	}
+	utilz.RegisterGracefulShutdownCloser("userz-client", userzClient)
 
 	addzServer := addz.NewAddzServer(logzClient, expzClient, userzClient)
 	statuszServer := statusz.NewStatuszServer()
@@ -64,22 +67,14 @@ func main() {
 	grpcServer := grpc.NewServer()
 	addz.RegisterAddzServiceServer(grpcServer, addzServer)
 	statusz.RegisterStatuszServiceServer(grpcServer, statuszServer)
+	utilz.RegisterGracefulShutdownGrpcServer("grpc-server", grpcServer)
 
-	log.Printf("addz listening on %s...", addr)
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("serving error: %v", err)
-	}
-
-}
-
-func combine(muxs ...*http.ServeMux) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		for _, mux := range muxs {
-			if handler, pattern := mux.Handler(r); pattern != "" {
-				handler.ServeHTTP(w, r)
-				return
-			}
+	go func() {
+		log.Printf("userz listening on %s...", addr)
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Printf("grpc server error: %v", err)
 		}
-		http.NotFoundHandler().ServeHTTP(w, r)
-	})
+	}()
+
+	<-utilz.GracefulShutdown()
 }

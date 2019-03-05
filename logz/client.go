@@ -136,6 +136,10 @@ func (c *Client) Defer(frame *Frame, level Level, message string) *DeferredLog {
 
 }
 
+func (c *Client) Close() error {
+	return c.conn.Close()
+}
+
 type DeferredLog struct {
 	logz       *Client
 	frameEntry *frameEntry

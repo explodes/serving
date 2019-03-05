@@ -76,3 +76,7 @@ func (c *Client) Validate(ctx context.Context, cookie string) (bool, error) {
 	}
 	return res.Result == ValidateResponse_SUCCESS, nil
 }
+
+func (c *Client) Close() error {
+	return c.conn.Close()
+}

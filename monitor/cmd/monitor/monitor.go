@@ -73,7 +73,7 @@ func monitorService(ctx context.Context, fgColor color.Attribute, service *monit
 	name := fmt.Sprintf("%s/%s:", addr, service.Name)
 
 	buf := bytes.NewBuffer(make([]byte, 0, 1024))
-	var client statusz.StatuszServiceClient
+	var cc *connClient
 
 	colorBuff := color.New(fgColor)
 
@@ -84,22 +84,25 @@ func monitorService(ctx context.Context, fgColor color.Attribute, service *monit
 	for {
 		buf.Reset()
 
-		if client == nil {
+		if cc == nil {
 			var err error
-			client, err = makeClient(service)
+			cc, err = makeClient(service)
 			if err != nil {
 				printf(buf, "%s ERROR %v", name, err)
-				client = nil
+				if err := cc.conn.Close(); err != nil {
+					log.Printf("error closing client: %v", err)
+				}
+				cc = nil
 			}
 		}
-		if client != nil {
+		if cc != nil {
 			reqCtx, _ := context.WithTimeout(ctx, service.Timeout.Duration())
 			now := time.Now()
-			res, err := client.GetStatus(reqCtx, &statusz.GetStatusRequest{})
+			res, err := cc.client.GetStatus(reqCtx, &statusz.GetStatusRequest{})
 			then := time.Now()
 			if err != nil {
 				printf(buf, "%s ERROR %v", name, err)
-				client = nil
+				cc = nil
 			} else {
 				printf(buf, "%s (%s) ", name, then.Sub(now))
 				if err := compactTextMarshaller.Marshal(buf, res.Status); err != nil {
@@ -133,10 +136,20 @@ func colorPrint(c *color.Color, buf fmt.Stringer) {
 	}
 }
 
-func makeClient(service *monitor.Config_Service) (statusz.StatuszServiceClient, error) {
+type connClient struct {
+	conn   *grpc.ClientConn
+	client statusz.StatuszServiceClient
+}
+
+func makeClient(service *monitor.Config_Service) (*connClient, error) {
 	conn, err := grpc.Dial(service.Address.Address(), grpc.WithInsecure())
 	if err != nil {
 		return nil, err
 	}
-	return statusz.NewStatuszServiceClient(conn), nil
+	client := statusz.NewStatuszServiceClient(conn)
+	cc := &connClient{
+		conn:   conn,
+		client: client,
+	}
+	return cc, nil
 }

@@ -2,3 +2,7 @@ bind_address {
   host: "0.0.0.0"
   port: 4001
 }
+statusz_address {
+  host: "0.0.0.0"
+  port: 7001
+}

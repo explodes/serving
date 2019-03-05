@@ -11,9 +11,10 @@ option go_package = "github.com/explodes/serving/expz";
 message ExpzConfig {
 
   .serving.Address bind_address = 1;
-  .serving.Address logz_address = 2;
+  .serving.Address statusz_address = 2;
+  .serving.Address logz_address = 3;
 
-  repeated FeatureDeclaration default_features = 3;
+  repeated FeatureDeclaration default_features = 4;
 
   message ExperimentalFeatures {
     string name = 1;
@@ -29,7 +30,7 @@ message ExpzConfig {
 
     Features features = 4;
   }
-  repeated ExperimentalFeatures experimental_features = 4;
+  repeated ExperimentalFeatures experimental_features = 5;
 }
 
 message GetExperimentsRequest {

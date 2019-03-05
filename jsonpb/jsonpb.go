@@ -3,6 +3,7 @@ package jsonpb
 import (
 	spb "github.com/explodes/serving/proto"
 	"github.com/explodes/serving/statusz"
+	"github.com/explodes/serving/utilz"
 	"github.com/gorilla/handlers"
 	"github.com/zang-cloud/grpc-json"
 	"net/http"
@@ -18,8 +19,17 @@ func ServeJson(httpAddr *spb.Address, servers ...interface{}) error {
 		muxs = append(muxs, mux)
 	}
 	mux := CombineMux(muxs...)
-	serverHTTP := &http.Server{Addr: httpAddr.Address(), Handler: mux}
-	return serverHTTP.ListenAndServe()
+	server := &http.Server{Addr: httpAddr.Address(), Handler: mux}
+	utilz.RegisterGracefulShutdownHttpServer("json-server", server)
+	return server.ListenAndServe()
+}
+
+func ServeStatusz(httpAddr *spb.Address) error {
+	mux := http.NewServeMux()
+	statusz.RegisterStatuszWebpage(httpAddr.Address(), mux)
+	server := &http.Server{Addr: httpAddr.Address(), Handler: mux}
+	utilz.RegisterGracefulShutdownHttpServer("statusz-web-server", server)
+	return server.ListenAndServe()
 }
 
 func CombineMux(muxs ...*http.ServeMux) http.Handler {

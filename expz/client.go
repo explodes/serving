@@ -93,3 +93,8 @@ func (exp ExperimentFlags) StringValue(name string, def string) string {
 	}
 	return flag.StringValue(def)
 }
+
+func (c *Client) Close() error {
+	return c.conn.Close()
+}
+

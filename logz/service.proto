@@ -10,6 +10,7 @@ option go_package = "github.com/explodes/serving/logz";
 
 message ServiceConfig {
   .serving.Address bind_address = 1;
+  .serving.Address statusz_address = 2;
 }
 
 message RecordRequest {
