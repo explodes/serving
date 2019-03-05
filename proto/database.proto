@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package serving;
+
+option go_package = "github.com/explodes/serving/proto";
+
+message DatabaseAddress {
+  oneof database_address {
+    PostgresAddress postgres = 1;
+    Sqlite3Address sqlite3 = 2;
+  }
+}
+
+message PostgresAddress {
+  string url = 1;
+}
+
+message Sqlite3Address {
+  string url = 1;
+}

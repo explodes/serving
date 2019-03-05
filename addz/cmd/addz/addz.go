@@ -49,13 +49,13 @@ func main() {
 	}
 
 	addzServer := addz.NewAddzServer(logzClient, expzClient, userzClient)
-	statuzServer := statusz.NewStatuszServer()
+	statuszServer := statusz.NewStatuszServer()
 
 	if config.JsonBindAddress != nil {
 		go func() {
 			log.Printf("Serving JSON at %s...\n", config.JsonBindAddress.Address())
 			log.Printf("Serving status page at %s/statusz\n", config.JsonBindAddress.Address())
-			if err := jsonpb.ServeJson(config.JsonBindAddress, addzServer, statuzServer); err != nil {
+			if err := jsonpb.ServeJson(config.JsonBindAddress, addzServer, statuszServer); err != nil {
 				log.Fatal(err)
 			}
 		}()
@@ -63,7 +63,7 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	addz.RegisterAddzServiceServer(grpcServer, addzServer)
-	statusz.RegisterStatuszServiceServer(grpcServer, statuzServer)
+	statusz.RegisterStatuszServiceServer(grpcServer, statuszServer)
 
 	log.Printf("addz listening on %s...", addr)
 	if err := grpcServer.Serve(lis); err != nil {

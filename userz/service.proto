@@ -2,8 +2,9 @@ syntax = "proto3";
 
 package userz;
 
-import "proto/serialization.proto";
 import "proto/address.proto";
+import "proto/serialization.proto";
+import "proto/database.proto";
 
 option go_package = "github.com/explodes/serving/userz";
 
@@ -12,7 +13,9 @@ message UserzConfig {
   .serving.Address json_bind_address = 2;
   .serving.Address logz_address = 3;
   .serving.Address expz_address = 4;
-  string cookie_passcode = 5;
+  .serving.DatabaseAddress database_address = 5;
+  string cookie_passcode = 6;
+  string cookie_salt = 7;
 }
 
 message LoginRequest {

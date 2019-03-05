@@ -1,17 +1,15 @@
 package userz
 
 import (
-	"encoding/hex"
-	"github.com/explodes/serving/cryptz"
 	"github.com/explodes/serving/expz"
 	"github.com/explodes/serving/logz"
 	spb "github.com/explodes/serving/proto"
 	"github.com/explodes/serving/statusz"
+	"github.com/explodes/serving/utilz"
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
-	"sync"
 	"time"
 )
 
@@ -21,9 +19,9 @@ const (
 
 type userzServer struct {
 	cookiePasscode string
+	storage        Storage
 	logz           *logz.Client
 	expz           *expz.Client
-	sessions       *sessions
 }
 
 type deps struct {
@@ -44,13 +42,13 @@ func registerExpzStatusz() {
 	})
 }
 
-func NewUserzServer(cookiePasscode string, logz *logz.Client, expz *expz.Client) UserzServiceServer {
+func NewUserzServer(cookiePasscode string, storage Storage, logz *logz.Client, expz *expz.Client) UserzServiceServer {
 	registerExpzStatusz()
 	return &userzServer{
 		cookiePasscode: cookiePasscode,
+		storage:        storage,
 		logz:           logz,
 		expz:           expz,
-		sessions:       newSessions(),
 	}
 }
 
@@ -94,7 +92,7 @@ func (s *userzServer) Login(requestContext context.Context, req *LoginRequest) (
 	}
 	defer deps.log.Send()
 
-	uid, err := s.userId(requestContext, req.Username, req.Password)
+	uid, err := s.storage.UserID(requestContext, req.Username, req.Password)
 	if err != nil {
 		s.logz.Errorf(deps.frame, "unable to get user id: %v", err)
 		res := &LoginResponse{
@@ -114,10 +112,16 @@ func (s *userzServer) Login(requestContext context.Context, req *LoginRequest) (
 		UserId:         uid,
 		SessionId:      getUuid(),
 	}
+
 	serialCookie, err := s.serializeCookie(cookie)
-	s.sessions.save(serialCookie, cookie)
 	if err != nil {
 		s.logz.Errorf(deps.frame, "unable to serialize cookie: %v", err)
+		return nil, errors.New("login error")
+	}
+
+	err = s.storage.Save(requestContext, serialCookie, cookie)
+	if err != nil {
+		s.logz.Errorf(deps.frame, "unable to save cookie: %v", err)
 		return nil, errors.New("login error")
 	}
 
@@ -131,13 +135,6 @@ func (s *userzServer) Login(requestContext context.Context, req *LoginRequest) (
 	return res, nil
 }
 
-func (s *userzServer) userId(ctx context.Context, username, password string) (string, error) {
-	if username != "test" || password != "test" {
-		return "", errors.New("invalid login")
-	}
-	return "1.0", nil
-}
-
 func (s *userzServer) Validate(requestContext context.Context, req *ValidateRequest) (*ValidateResponse, error) {
 	defer varValidate.Start().End()
 
@@ -147,7 +144,12 @@ func (s *userzServer) Validate(requestContext context.Context, req *ValidateRequ
 	}
 	defer deps.log.Send()
 
-	valid := s.sessions.exists(req.Cookie)
+	valid, err := s.storage.Validate(requestContext, req.Cookie)
+	if err != nil {
+		s.logz.Errorf(deps.frame, "error validating cookie with storage: %v", err)
+		return nil, errors.Wrap(err, "validation error")
+
+	}
 	var result ValidateResponse_ValidateResult
 	if valid {
 		result = ValidateResponse_SUCCESS
@@ -166,19 +168,15 @@ func (s *userzServer) serializeCookie(cookie *spb.Cookie) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "error serializing cookie")
 	}
-	b, err = cryptz.Encrypt(b, s.cookiePasscode)
+	serial, err := utilz.EncryptString(b, s.cookiePasscode)
 	if err != nil {
 		return "", errors.Wrap(err, "error encrypting cookie")
 	}
-	return hex.EncodeToString(b), nil
+	return serial, nil
 }
 
 func (s *userzServer) deserializeCookie(serial string) (*spb.Cookie, error) {
-	b, err := hex.DecodeString(serial)
-	if err != nil {
-		return nil, errors.Wrap(err, "error decoding cookie")
-	}
-	b, err = cryptz.Decrypt(b, s.cookiePasscode)
+	b, err := utilz.DecryptString(serial, s.cookiePasscode)
 	if err != nil {
 		return nil, errors.Wrap(err, "error decrypting cookie")
 	}
@@ -187,39 +185,6 @@ func (s *userzServer) deserializeCookie(serial string) (*spb.Cookie, error) {
 		return nil, errors.Wrap(err, "error unmarshalling cookie")
 	}
 	return cookie, nil
-}
-
-type sessions struct {
-	mu *sync.RWMutex
-	m  map[string]*spb.Cookie
-}
-
-func newSessions() *sessions {
-	return &sessions{
-		mu: &sync.RWMutex{},
-		m:  make(map[string]*spb.Cookie),
-	}
-}
-
-func (s *sessions) exists(serial string) bool {
-	s.mu.RLock()
-	cookie, exists := s.m[serial]
-	s.mu.RUnlock()
-
-	expired := cookie.ExpirationTime != nil && cookie.ExpirationTime.Time().Before(time.Now())
-	if expired {
-		s.mu.Lock()
-		delete(s.m, serial)
-		s.mu.Unlock()
-	}
-
-	return exists && !expired
-}
-
-func (s *sessions) save(serial string, cookie *spb.Cookie) {
-	s.mu.Lock()
-	s.m[serial] = cookie
-	s.mu.Unlock()
 }
 
 func getUuid() string {

@@ -14,4 +14,10 @@ expz_address {
   host: "0.0.0.0"
   port: 4002
 }
+database_address {
+  postgres {
+    url: "postgresql://userz:userzpass@localhost:5433/userz"
+  }
+}
 cookie_passcode: "tacoboats99999lmao"
+cookie_salt: "boatsoftacos344444rofl"

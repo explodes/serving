@@ -8,7 +8,10 @@ import (
 	"github.com/explodes/serving/logz"
 	"github.com/explodes/serving/statusz"
 	"github.com/explodes/serving/userz"
+	"github.com/explodes/serving/utilz"
+	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
+	"io"
 	"log"
 	"net"
 )
@@ -31,6 +34,13 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
+	db, err := utilz.OpenDatabaseAddress(config.DatabaseAddress)
+	if err != nil {
+		log.Fatalf("error connecting to database: %v", err)
+	}
+	defer mustClose(db)
+	storage := userz.NewPostgresStorage(db, config.CookieSalt)
+
 	logzClient, err := logz.NewClient(config.LogzAddress.Address())
 	if err != nil {
 		log.Fatalf("error connecting to logz: %v", err)
@@ -41,14 +51,14 @@ func main() {
 		log.Fatalf("error connecting to expz: %v", err)
 	}
 
-	userzServer := userz.NewUserzServer(config.CookiePasscode, logzClient, expzClient)
-	statuzServer := statusz.NewStatuszServer()
+	userzServer := userz.NewUserzServer(config.CookiePasscode, storage, logzClient, expzClient)
+	statuszServer := statusz.NewStatuszServer()
 
 	if config.JsonBindAddress != nil {
 		go func() {
 			log.Printf("Serving JSON at %s...\n", config.JsonBindAddress.Address())
 			log.Printf("Serving status page at %s/statusz\n", config.JsonBindAddress.Address())
-			if err := jsonpb.ServeJson(config.JsonBindAddress, userzServer, statuzServer); err != nil {
+			if err := jsonpb.ServeJson(config.JsonBindAddress, userzServer, statuszServer); err != nil {
 				log.Fatal(err)
 			}
 		}()
@@ -56,11 +66,16 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	userz.RegisterUserzServiceServer(grpcServer, userzServer)
-	statusz.RegisterStatuszServiceServer(grpcServer, statuzServer)
+	statusz.RegisterStatuszServiceServer(grpcServer, statuszServer)
 
 	log.Printf("userz listening on %s...", addr)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("serving error: %v", err)
 	}
+}
 
+func mustClose(c io.Closer) {
+	if err := c.Close(); err != nil {
+		log.Fatal(err)
+	}
 }
