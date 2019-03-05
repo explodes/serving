@@ -37,7 +37,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("error connecting to database: %v", err)
 	}
-	utilz.RegisterGracefulShutdownCloser("database-connection", db)
+	utilz.RegisterGracefulShutdownCloser("storage", db)
 	storage := userz.NewPostgresStorage(db, config.CookieSalt)
 
 	logzClient, err := logz.NewClient(config.LogzAddress.Address())
@@ -57,8 +57,8 @@ func main() {
 
 	if config.JsonBindAddress != nil {
 		go func() {
-			log.Printf("Serving JSON at %s...\n", config.JsonBindAddress.Address())
-			log.Printf("Serving status page at %s/statusz\n", config.JsonBindAddress.Address())
+			log.Printf("Serving JSON at http://%s...\n", config.JsonBindAddress.Address())
+			log.Printf("Serving status page at http://%s/statusz\n", config.JsonBindAddress.Address())
 			if err := jsonpb.ServeJson(config.JsonBindAddress, userzServer, statuszServer); err != nil {
 				log.Printf("json server error: %v", err)
 			}

@@ -35,18 +35,20 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
+	statuszServer := statusz.NewStatuszServer()
+
 	if config.StatuszAddress != nil {
 		go func() {
-			log.Printf("Serving status page at %s/statusz\n", config.StatuszAddress.Address())
-			if err := jsonpb.ServeStatusz(config.StatuszAddress); err != nil {
-				log.Printf("statusz server error: %v", err)
+			log.Printf("Serving status page at http://%s/statusz\n", config.StatuszAddress.Address())
+			if err := jsonpb.ServeJson(config.StatuszAddress, statuszServer); err != nil {
+				log.Fatal(err)
 			}
 		}()
 	}
 
 	grpcServer := grpc.NewServer()
 	logz.RegisterLogzServiceServer(grpcServer, logz.NewLogzServer(config))
-	statusz.RegisterStatuszServiceServer(grpcServer, statusz.NewStatuszServer())
+	statusz.RegisterStatuszServiceServer(grpcServer, statuszServer)
 	utilz.RegisterGracefulShutdownGrpcServer("grpc-server", grpcServer)
 
 	go func() {

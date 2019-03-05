@@ -24,14 +24,6 @@ func ServeJson(httpAddr *spb.Address, servers ...interface{}) error {
 	return server.ListenAndServe()
 }
 
-func ServeStatusz(httpAddr *spb.Address) error {
-	mux := http.NewServeMux()
-	statusz.RegisterStatuszWebpage(httpAddr.Address(), mux)
-	server := &http.Server{Addr: httpAddr.Address(), Handler: mux}
-	utilz.RegisterGracefulShutdownHttpServer("statusz-web-server", server)
-	return server.ListenAndServe()
-}
-
 func CombineMux(muxs ...*http.ServeMux) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		for _, mux := range muxs {

@@ -56,8 +56,8 @@ func main() {
 
 	if config.JsonBindAddress != nil {
 		go func() {
-			log.Printf("Serving JSON at %s...\n", config.JsonBindAddress.Address())
-			log.Printf("Serving status page at %s/statusz\n", config.JsonBindAddress.Address())
+			log.Printf("Serving JSON at http://%s...\n", config.JsonBindAddress.Address())
+			log.Printf("Serving status page at http://%s/statusz\n", config.JsonBindAddress.Address())
 			if err := jsonpb.ServeJson(config.JsonBindAddress, addzServer, statuszServer); err != nil {
 				log.Fatal(err)
 			}
