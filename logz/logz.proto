@@ -37,11 +37,11 @@ message Frame {
   string stack_id = 1;
 
   // ID of an individual RPC.
-  string operation_id = 2;
+  string frame_id = 2;
 
   // Name of an individual RPC.
-  string operation_name = 3;
+  string frame_name = 3;
 
   // Parent operation ID of an individual RPC.
-  string parent_operation_id = 4;
+  string parent_frame_id = 4;
 }

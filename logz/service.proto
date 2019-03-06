@@ -15,7 +15,7 @@ message ServiceConfig {
 
 message RecordRequest {
   string cookie = 1 [(.serving.serialization_of) = ".serving.Cookie"];
-  Frame stack = 2;
+  Frame frame = 2;
   repeated Entry entries = 3;
 }
 

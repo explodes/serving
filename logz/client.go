@@ -48,7 +48,7 @@ func NewClient(logz LogzServiceClient) Client {
 func (c *clientImpl) loop() {
 	for frameEntry := range c.entries {
 		req := &RecordRequest{
-			Stack:   frameEntry.frame,
+			Frame:   frameEntry.frame,
 			Entries: []*Entry{frameEntry.entry},
 		}
 		if err := c.console.Record(req); err != nil {

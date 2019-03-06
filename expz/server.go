@@ -41,7 +41,6 @@ func (s *expzServer) GetExperiments(ctx context.Context, req *GetExperimentsRequ
 		return nil, errors.Wrap(err, "unable to read incoming frame")
 	}
 	frame = logz.FrameForOutgoingContext(frame, "Expz.GetExperiments")
-	//spew.Dump(s.logz)
 	defer s.logz.DeferRequestLog(frame).Send()
 
 	hash, err := spb.CookieHash(req.Cookie)

@@ -12,7 +12,7 @@ import (
 )
 
 func TestServer(t *testing.T) {
-	serverTest(t, "basic", func(t *testing.T, mockLogz *mock_logz.MockClient, server expz.ExpzServiceServer, req *expz.GetExperimentsRequest) {
+	serverTest(t, "sanity", func(t *testing.T, mockLogz *mock_logz.MockClient, server expz.ExpzServiceServer, req *expz.GetExperimentsRequest) {
 		res, err := server.GetExperiments(test_serving.TestContext(), req)
 		assert.NoError(t, err)
 		assert.NotNil(t, res)

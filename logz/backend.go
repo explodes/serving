@@ -21,27 +21,27 @@ func NewConsoleBackend() Backend {
 
 func (cb *consoleBackend) Record(request *RecordRequest) (err error) {
 	for _, entry := range request.Entries {
-		cb.recordEntry(request.Stack, entry)
+		cb.recordEntry(request.Frame, entry)
 	}
 	return nil
 }
 
-func (cb *consoleBackend) recordEntry(stack *Frame, entry *Entry) {
+func (cb *consoleBackend) recordEntry(frame *Frame, entry *Entry) {
 	var message string
 	if entry.EndTimestamp == nil {
 		message = fmt.Sprintf("level=%-5s id=%-36s parent=%-36s operation=%-32s message=%s\n",
 			entry.Level,
-			stack.OperationId,
-			stack.ParentOperationId,
-			stack.OperationName,
+			frame.FrameId,
+			frame.ParentFrameId,
+			frame.FrameName,
 			entry.Message,
 		)
 	} else {
 		message = fmt.Sprintf("level=%-5s id=%-36s parent=%-36s operation=%-32s duration=%-10s message=%s\n",
 			entry.Level,
-			stack.OperationId,
-			stack.ParentOperationId,
-			stack.OperationName,
+			frame.FrameId,
+			frame.ParentFrameId,
+			frame.FrameName,
 			time.Duration(entry.EndTimestamp.GetNanoseconds()-entry.Timestamp.GetNanoseconds()),
 			entry.Message,
 		)

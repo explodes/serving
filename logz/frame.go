@@ -33,21 +33,21 @@ func PutFrameInOutgoingContext(ctx context.Context, frame *Frame) (context.Conte
 }
 
 // FrameForOutgoingContext creates a Frame for outgoing RPCs.
-func FrameForOutgoingContext(parent *Frame, operationName string) *Frame {
-	var stackID, parentOperationID string
+func FrameForOutgoingContext(parent *Frame, frameName string) *Frame {
+	var stackID, parentFrameId string
 	if parent == nil {
 		stackID = getUuid()
-		parentOperationID = ""
+		parentFrameId = ""
 
 	} else {
 		stackID = parent.StackId
-		parentOperationID = parent.OperationId
+		parentFrameId = parent.FrameId
 	}
 	return &Frame{
 		StackId:           stackID,
-		OperationId:       getUuid(),
-		ParentOperationId: parentOperationID,
-		OperationName:     operationName,
+		FrameId:           getUuid(),
+		ParentFrameId: parentFrameId,
+		FrameName:         frameName,
 	}
 }
 
