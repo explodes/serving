@@ -6,13 +6,17 @@ json_bind_address {
  host: "0.0.0.0"
  port: 7004
 }
-logz_address {
-  host: "0.0.0.0"
-  port: 4001
+logz_server {
+  address {
+    host: "0.0.0.0"
+    port: 4001
+  }
 }
-expz_address {
-  host: "0.0.0.0"
-  port: 4002
+expz_server {
+  address {
+    host: "0.0.0.0"
+    port: 4002
+  }
 }
 database_address {
   postgres {

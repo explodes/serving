@@ -1,8 +1,10 @@
 services {
   name: "logz"
-  address {
-    host: "0.0.0.0"
-    port: 4001
+  grpc_server {
+    address{
+      host: "0.0.0.0"
+      port: 4001
+    }
   }
   update_frequency {
     milliseconds: 5000
@@ -13,9 +15,11 @@ services {
 }
 services {
   name: "expz"
-  address {
-    host: "0.0.0.0"
-    port: 4002
+  grpc_server {
+    address{
+      host: "0.0.0.0"
+      port: 4002
+    }
   }
   update_frequency {
     milliseconds: 5000
@@ -26,9 +30,11 @@ services {
 }
 services {
   name: "addz"
-  address {
-    host: "0.0.0.0"
-    port: 4003
+  grpc_server {
+    address{
+      host: "0.0.0.0"
+      port: 4003
+    }
   }
   update_frequency {
     milliseconds: 5000
@@ -39,9 +45,11 @@ services {
 }
 services {
   name: "userz"
-  address {
-    host: "0.0.0.0"
-    port: 4004
+  grpc_server {
+    address{
+      host: "0.0.0.0"
+      port: 4004
+    }
   }
   update_frequency {
     milliseconds: 5000

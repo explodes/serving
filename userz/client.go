@@ -3,46 +3,17 @@ package userz
 import (
 	"context"
 	"github.com/pkg/errors"
-	"google.golang.org/grpc"
-	"sync"
 )
 
 type Client struct {
-	clientMu *sync.RWMutex
-	addr     string
-	conn     *grpc.ClientConn
-	userz    UserzServiceClient
+	userz UserzServiceClient
 }
 
-func NewClient(addr string) (*Client, error) {
+func NewClient(userz UserzServiceClient) *Client {
 	client := &Client{
-		clientMu: &sync.RWMutex{},
-		addr:     addr,
+		userz: userz,
 	}
-	err := client.restoreClient()
-	if err != nil {
-		return nil, err
-	}
-	return client, nil
-}
-
-func (c *Client) restoreClient() error {
-	c.clientMu.Lock()
-	defer c.clientMu.Unlock()
-	if c.conn != nil {
-		if err := c.conn.Close(); err != nil {
-			return err
-		}
-		c.conn = nil
-		c.userz = nil
-	}
-	conn, err := grpc.Dial(c.addr, grpc.WithInsecure())
-	if err != nil {
-		return err
-	}
-	c.conn = conn
-	c.userz = NewUserzServiceClient(conn)
-	return nil
+	return client
 }
 
 func (c *Client) Login(ctx context.Context, username, password string) (cookie string, err error) {
@@ -75,8 +46,4 @@ func (c *Client) Validate(ctx context.Context, cookie string) (bool, error) {
 		return false, errors.Wrap(err, "error validating user")
 	}
 	return res.Result == ValidateResponse_SUCCESS, nil
-}
-
-func (c *Client) Close() error {
-	return c.conn.Close()
 }

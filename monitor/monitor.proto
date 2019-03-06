@@ -11,7 +11,7 @@ message Config {
   message Service {
     string name = 1;
 
-    .serving.Address address = 2;
+    .serving.GrpcServer grpc_server = 2;
 
     .serving.Duration update_frequency = 3;
 

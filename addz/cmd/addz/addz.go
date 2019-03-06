@@ -33,23 +33,26 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	logzClient, err := logz.NewClient(config.LogzAddress.Address())
+	logzConn, err := utilz.DialGrpc(config.LogzServer)
 	if err != nil {
-		log.Fatalf("error connecting to logz: %v", err)
+		log.Fatalf("error dialing logz: %v", err)
 	}
-	utilz.RegisterGracefulShutdownCloser("logz-client", logzClient)
+	utilz.RegisterGracefulShutdownCloser("logz-conn", logzConn)
+	logzClient := logz.NewClient(logz.NewLogzServiceClient(logzConn))
 
-	expzClient, err := expz.NewClient(config.ExpzAddress.Address())
+	expzConn, err := utilz.DialGrpc(config.ExpzServer)
 	if err != nil {
-		log.Fatalf("error connecting to expz: %v", err)
+		log.Fatalf("error dialing expz: %v", err)
 	}
-	utilz.RegisterGracefulShutdownCloser("expz-client", expzClient)
+	utilz.RegisterGracefulShutdownCloser("expz-conn", expzConn)
+	expzClient := expz.NewClient(expz.NewExpzServiceClient(expzConn))
 
-	userzClient, err := userz.NewClient(config.UserzAddress.Address())
+	userzConn, err := utilz.DialGrpc(config.UserzServer)
 	if err != nil {
-		log.Fatalf("error connecting to userz: %v", err)
+		log.Fatalf("error dialing userz: %v", err)
 	}
-	utilz.RegisterGracefulShutdownCloser("userz-client", userzClient)
+	utilz.RegisterGracefulShutdownCloser("userz-conn", userzConn)
+	userzClient := userz.NewClient(userz.NewUserzServiceClient(userzConn))
 
 	addzServer := addz.NewAddzServer(logzClient, expzClient, userzClient)
 	statuszServer := statusz.NewStatuszServer()
@@ -59,7 +62,7 @@ func main() {
 			log.Printf("Serving JSON at http://%s...\n", config.JsonBindAddress.Address())
 			log.Printf("Serving status page at http://%s/statusz\n", config.JsonBindAddress.Address())
 			if err := jsonpb.ServeJson(config.JsonBindAddress, addzServer, statuszServer); err != nil {
-				log.Fatal(err)
+				log.Printf("error serving json: %v", err)
 			}
 		}()
 	}
@@ -70,7 +73,7 @@ func main() {
 	utilz.RegisterGracefulShutdownGrpcServer("grpc-server", grpcServer)
 
 	go func() {
-		log.Printf("userz listening on %s...", addr)
+		log.Printf("addz listening on %s...", addr)
 		if err := grpcServer.Serve(lis); err != nil {
 			log.Printf("grpc server error: %v", err)
 		}

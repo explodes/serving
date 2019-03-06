@@ -2,46 +2,17 @@ package expz
 
 import (
 	"context"
-	"google.golang.org/grpc"
-	"sync"
 )
 
 type Client struct {
-	clientMu *sync.RWMutex
-	addr     string
-	conn     *grpc.ClientConn
-	expz     ExpzServiceClient
+	expz ExpzServiceClient
 }
 
-func NewClient(addr string) (*Client, error) {
+func NewClient(expz ExpzServiceClient) *Client {
 	client := &Client{
-		clientMu: &sync.RWMutex{},
-		addr:     addr,
+		expz: expz,
 	}
-	err := client.restoreClient()
-	if err != nil {
-		return nil, err
-	}
-	return client, nil
-}
-
-func (c *Client) restoreClient() error {
-	c.clientMu.Lock()
-	defer c.clientMu.Unlock()
-	if c.conn != nil {
-		if err := c.conn.Close(); err != nil {
-			return err
-		}
-		c.conn = nil
-		c.expz = nil
-	}
-	conn, err := grpc.Dial(c.addr, grpc.WithInsecure())
-	if err != nil {
-		return err
-	}
-	c.conn = conn
-	c.expz = NewExpzServiceClient(conn)
-	return nil
+	return client
 }
 
 func (c *Client) GetExperiments(ctx context.Context, cookie string) (*ExperimentFlags, error) {
@@ -93,8 +64,3 @@ func (exp ExperimentFlags) StringValue(name string, def string) string {
 	}
 	return flag.StringValue(def)
 }
-
-func (c *Client) Close() error {
-	return c.conn.Close()
-}
-

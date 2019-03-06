@@ -41,13 +41,10 @@ func registerHandler() {
 		defer gracefulMu.Unlock()
 
 		nShutdowns := len(gracefulShutdowns)
-		if nShutdowns == 0 {
-			return
-		} else if nShutdowns == 1 {
-			log.Printf("Received shutdown signal '%s', attempting graceful shutdown of 1 system...\n", exitSignal)
-
+		if nShutdowns == 1 {
+			log.Printf("SHUTDOWN STARTED (%s): 1 system", exitSignal)
 		} else {
-			log.Printf("Received shutdown signal '%s', attempting graceful shutdown of %d systems...\n", exitSignal, nShutdowns)
+			log.Printf("SHUTDOWN STARTED (%s): %d systems", exitSignal, nShutdowns)
 		}
 		wg := &sync.WaitGroup{}
 		wg.Add(nShutdowns)
@@ -55,12 +52,11 @@ func registerHandler() {
 			go func(sd shutdowner) {
 				defer wg.Done()
 				name := sd.Name()
-				log.Printf("shutting down: %s...", name)
 				err := sd.Shutdown()
 				if err == nil {
-					log.Printf("%s shutdown successfully", name)
+					log.Printf("SHUTDOWN SUCCESS: %s", name)
 				} else {
-					log.Printf("%s shutdown with error: %v", name, err)
+					log.Printf("SHUTDOWN FAILURE: %s: %v", name, err)
 				}
 			}(sd)
 		}
@@ -68,16 +64,17 @@ func registerHandler() {
 
 		close(gracefulCh)
 
-		//// We need to re-emit the exit signal because the normal use case is that stuff will be run in a goroutine and since it has hijacked the exit signal it must re-emit.
-		//log.Printf("Graceful shutdown complete, re-emitting exit signal '%s'", exitSignal)
-		//signal.Stop(exitChan)
-		//if currentProcess, err := os.FindProcess(os.Getpid()); err != nil {
-		//	log.Printf("Error getting current process to re-emit exit signal: %v", err)
-		//} else {
-		//	if err := currentProcess.Signal(exitSignal); err != nil {
-		//		log.Printf("Error re-emitting exit signal: %v", err)
-		//	}
-		//}
+		// We need to re-emit the exit signal because a normal use case is that stuff will be run
+		// in a goroutine and since it has hijacked the exit signal it must re-emit.
+		log.Print("SHUTDOWN COMPLETE")
+		signal.Stop(exitChan)
+		if currentProcess, err := os.FindProcess(os.Getpid()); err != nil {
+			log.Printf("Error getting current process to re-emit exit signal: %v", err)
+		} else {
+			if err := currentProcess.Signal(exitSignal); err != nil {
+				log.Printf("Error re-emitting exit signal: %v", err)
+			}
+		}
 	}()
 }
 

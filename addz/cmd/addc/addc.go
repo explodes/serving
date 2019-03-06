@@ -5,8 +5,8 @@ import (
 	"flag"
 	"github.com/explodes/serving/addz"
 	"github.com/explodes/serving/userz"
+	"github.com/explodes/serving/utilz"
 	"google.golang.org/grpc"
-	"io"
 	"log"
 	"time"
 )
@@ -23,17 +23,20 @@ var (
 
 func main() {
 	flag.Parse()
-	conn, err := grpc.Dial(*flagAddzAddr, grpc.WithInsecure())
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer mustClose(conn)
 
-	addzClient := addz.NewAddzServiceClient(conn)
-	userzClient, err := userz.NewClient(*flagUserzAddr)
+	addzConn, err := grpc.Dial(*flagAddzAddr, grpc.WithInsecure())
 	if err != nil {
 		log.Fatal(err)
 	}
+	utilz.RegisterGracefulShutdownCloser("addz-conn", addzConn)
+	addzClient := addz.NewAddzServiceClient(addzConn)
+
+	userzConn, err := grpc.Dial(*flagUserzAddr, grpc.WithInsecure())
+	if err != nil {
+		log.Fatal(err)
+	}
+	utilz.RegisterGracefulShutdownCloser("userz-conn", userzConn)
+	userzClient := userz.NewClient(userz.NewUserzServiceClient(userzConn))
 
 	values := []int64{2, 3, 4}
 
@@ -59,11 +62,5 @@ func main() {
 		}
 		cookieInt++
 		<-time.After(*flagLoopFrq)
-	}
-}
-
-func mustClose(c io.Closer) {
-	if err := c.Close(); err != nil {
-		panic(err)
 	}
 }

@@ -37,11 +37,11 @@ func main() {
 
 	statuszServer := statusz.NewStatuszServer()
 
-	if config.StatuszAddress != nil {
+	if config.JsonBindAddress != nil {
 		go func() {
-			log.Printf("Serving status page at http://%s/statusz\n", config.StatuszAddress.Address())
-			if err := jsonpb.ServeJson(config.StatuszAddress, statuszServer); err != nil {
-				log.Fatal(err)
+			log.Printf("Serving status page at http://%s/statusz\n", config.JsonBindAddress.Address())
+			if err := jsonpb.ServeJson(config.JsonBindAddress, statuszServer); err != nil {
+				log.Printf("json server error: %v", err)
 			}
 		}()
 	}

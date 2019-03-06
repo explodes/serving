@@ -8,6 +8,7 @@ import (
 	"github.com/explodes/serving"
 	"github.com/explodes/serving/monitor"
 	"github.com/explodes/serving/statusz"
+	"github.com/explodes/serving/utilz"
 	"github.com/fatih/color"
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
@@ -69,7 +70,7 @@ func main() {
 }
 
 func monitorService(ctx context.Context, fgColor color.Attribute, service *monitor.Config_Service) {
-	addr := service.Address.Address()
+	addr := service.GrpcServer.Address.Address()
 	name := fmt.Sprintf("%s/%s:", addr, service.Name)
 
 	buf := bytes.NewBuffer(make([]byte, 0, 1024))
@@ -106,7 +107,7 @@ func monitorService(ctx context.Context, fgColor color.Attribute, service *monit
 			} else {
 				printf(buf, "%s (%s) ", name, then.Sub(now))
 				if err := compactTextMarshaller.Marshal(buf, res.Status); err != nil {
-					log.Fatalf("error print metric: %v", err)
+					log.Printf("error printing metric: %v", err)
 				}
 			}
 			buf.WriteRune('\n')
@@ -142,7 +143,7 @@ type connClient struct {
 }
 
 func makeClient(service *monitor.Config_Service) (*connClient, error) {
-	conn, err := grpc.Dial(service.Address.Address(), grpc.WithInsecure())
+	conn, err := utilz.DialGrpc(service.GrpcServer)
 	if err != nil {
 		return nil, err
 	}

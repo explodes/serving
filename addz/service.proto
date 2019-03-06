@@ -10,9 +10,9 @@ option go_package = "github.com/explodes/serving/addz";
 message AddzConfig {
   .serving.Address bind_address = 1;
   .serving.Address json_bind_address = 2;
-  .serving.Address logz_address = 3;
-  .serving.Address expz_address = 4;
-  .serving.Address userz_address = 5;
+  .serving.GrpcServer logz_server = 3;
+  .serving.GrpcServer expz_server = 4;
+  .serving.GrpcServer userz_server = 5;
 }
 
 message AddRequest {

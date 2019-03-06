@@ -27,7 +27,7 @@ func main() {
 
 	experiments, err := config.Validate()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("invalid experiments configuration: %v", err)
 	}
 
 	addr := config.BindAddress.Address()
@@ -36,19 +36,20 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	logzClient, err := logz.NewClient(config.LogzAddress.Address())
+	logzConn, err := utilz.DialGrpc(config.LogzServer)
 	if err != nil {
-		log.Fatalf("error connecting to logz: %v", err)
+		log.Fatalf("error dialing logz: %v", err)
 	}
-	utilz.RegisterGracefulShutdownCloser("logz-client", logzClient)
+	utilz.RegisterGracefulShutdownCloser("logz-conn", logzConn)
+	logzClient := logz.NewClient(logz.NewLogzServiceClient(logzConn))
 
 	statuszServer := statusz.NewStatuszServer()
 
-	if config.StatuszAddress != nil {
+	if config.JsonBindAddress != nil {
 		go func() {
-			log.Printf("Serving status page at http://%s/statusz\n", config.StatuszAddress.Address())
-			if err := jsonpb.ServeJson(config.StatuszAddress, statuszServer); err != nil {
-				log.Fatal(err)
+			log.Printf("Serving status page at http://%s/statusz\n", config.JsonBindAddress.Address())
+			if err := jsonpb.ServeJson(config.JsonBindAddress, statuszServer); err != nil {
+				log.Printf("json server error: %v", err)
 			}
 		}()
 	}

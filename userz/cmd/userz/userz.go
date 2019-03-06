@@ -40,17 +40,19 @@ func main() {
 	utilz.RegisterGracefulShutdownCloser("storage", db)
 	storage := userz.NewPostgresStorage(db, config.CookieSalt)
 
-	logzClient, err := logz.NewClient(config.LogzAddress.Address())
+	logzConn, err := utilz.DialGrpc(config.LogzServer)
 	if err != nil {
-		log.Fatalf("error connecting to logz: %v", err)
+		log.Fatalf("error dialing logz: %v", err)
 	}
-	utilz.RegisterGracefulShutdownCloser("logz-client", logzClient)
+	utilz.RegisterGracefulShutdownCloser("logz-conn", logzConn)
+	logzClient := logz.NewClient(logz.NewLogzServiceClient(logzConn))
 
-	expzClient, err := expz.NewClient(config.ExpzAddress.Address())
+	expzConn, err := utilz.DialGrpc(config.ExpzServer)
 	if err != nil {
-		log.Fatalf("error connecting to expz: %v", err)
+		log.Fatalf("error dialing expz: %v", err)
 	}
-	utilz.RegisterGracefulShutdownCloser("expz-client", expzClient)
+	utilz.RegisterGracefulShutdownCloser("expz-conn", expzConn)
+	expzClient := expz.NewClient(expz.NewExpzServiceClient(expzConn))
 
 	userzServer := userz.NewUserzServer(config.CookiePasscode, storage, logzClient, expzClient)
 	statuszServer := statusz.NewStatuszServer()

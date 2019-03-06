@@ -11,8 +11,8 @@ option go_package = "github.com/explodes/serving/userz";
 message UserzConfig {
   .serving.Address bind_address = 1;
   .serving.Address json_bind_address = 2;
-  .serving.Address logz_address = 3;
-  .serving.Address expz_address = 4;
+  .serving.GrpcServer logz_server = 3;
+  .serving.GrpcServer expz_server = 4;
   .serving.DatabaseAddress database_address = 5;
   string cookie_passcode = 6;
   string cookie_salt = 7;

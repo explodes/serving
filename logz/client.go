@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	spb "github.com/explodes/serving/proto"
-	"google.golang.org/grpc"
 	"log"
-	"sync"
 )
 
 type frameEntry struct {
@@ -15,27 +13,19 @@ type frameEntry struct {
 }
 
 type Client struct {
-	clientMu *sync.RWMutex
-	addr     string
-	conn     *grpc.ClientConn
-	logz     LogzServiceClient
-	entries  chan frameEntry
-	console  Backend
+	logz    LogzServiceClient
+	entries chan frameEntry
+	console Backend
 }
 
-func NewClient(addr string) (*Client, error) {
+func NewClient(logz LogzServiceClient) *Client {
 	client := &Client{
-		clientMu: &sync.RWMutex{},
-		addr:     addr,
-		entries:  make(chan frameEntry),
-		console:  NewConsoleBackend(),
-	}
-	err := client.restoreClient()
-	if err != nil {
-		return nil, err
+		logz:    logz,
+		entries: make(chan frameEntry),
+		console: NewConsoleBackend(),
 	}
 	go client.loop()
-	return client, nil
+	return client
 }
 
 func (c *Client) loop() {
@@ -51,25 +41,6 @@ func (c *Client) loop() {
 			log.Printf("error sending log: %v", err)
 		}
 	}
-}
-
-func (c *Client) restoreClient() error {
-	c.clientMu.Lock()
-	defer c.clientMu.Unlock()
-	if c.conn != nil {
-		if err := c.conn.Close(); err != nil {
-			return err
-		}
-		c.conn = nil
-		c.logz = nil
-	}
-	conn, err := grpc.Dial(c.addr, grpc.WithInsecure())
-	if err != nil {
-		return err
-	}
-	c.conn = conn
-	c.logz = NewLogzServiceClient(conn)
-	return nil
 }
 
 func (c *Client) makeEntry(level Level, message string) *Entry {
@@ -133,11 +104,6 @@ func (c *Client) Defer(frame *Frame, level Level, message string) *DeferredLog {
 		logz:       c,
 		frameEntry: &frameEntry{frame: frame, entry: entry},
 	}
-
-}
-
-func (c *Client) Close() error {
-	return c.conn.Close()
 }
 
 type DeferredLog struct {
