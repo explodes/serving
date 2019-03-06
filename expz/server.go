@@ -9,8 +9,8 @@ import (
 )
 
 type expzServer struct {
-	logz *logz.Client
-	exps Experiments
+	logz logz.Client
+	mods ModFlags
 }
 
 var (
@@ -23,11 +23,11 @@ func registerExpzStatusz() {
 	})
 }
 
-func NewExpzServer(logz *logz.Client, exps Experiments) ExpzServiceServer {
+func NewExpzServer(logz logz.Client, mods ModFlags) ExpzServiceServer {
 	registerExpzStatusz()
 	return &expzServer{
 		logz: logz,
-		exps: exps,
+		mods: mods,
 	}
 }
 
@@ -43,13 +43,13 @@ func (s *expzServer) GetExperiments(ctx context.Context, req *GetExperimentsRequ
 
 	hash, err := spb.CookieHash(req.Cookie)
 	if err != nil {
-		s.logz.Errorf(frame, "error deserializing cookie: %v", err)
+		s.logz.Errorf(frame, "error hashing cookie: %v", err)
 		return nil, errors.New("cookie error")
 	}
 
 	mod := hash % MaxMods
 	s.logz.Debugf(frame, "mod=%d", mod)
-	flags := s.exps[mod]
+	flags := s.mods[mod]
 	res := &GetExperimentsResponse{
 		Features: &Features{
 			Flags: flags,

@@ -5,13 +5,13 @@ import (
 	"fmt"
 )
 
-var emptyExperiments = Experiments{}
+var emptyExperiments = ModFlags{}
 
-func (m *ExpzConfig) Validate() (Experiments, error) {
+func (m *ExpzConfig) Validate() (ModFlags, error) {
 	// Collect known flags.
-	experiments := NewExperiments()
+	mods := NewModFlags()
 	definedFlags := make(map[string]flagType)
-	experimentalFlags := NewExperiments()
+	experimentalFlags := NewModFlags()
 
 	for _, flag := range m.DefaultFeatures {
 		// Validate the FeatureDeclaration.
@@ -21,7 +21,7 @@ func (m *ExpzConfig) Validate() (Experiments, error) {
 		if flag.Doc == "" {
 			return emptyExperiments, fmt.Errorf("default feature %s is missing documentation", flag.Name)
 		}
-		if flag.DefaultValue == nil {
+		if flag.DefaultValue == nil || flag.DefaultValue.Flag == nil {
 			return emptyExperiments, fmt.Errorf("default feature %s is missing a default value", flag.Name)
 		}
 		// Cannot be defined multiple times.
@@ -34,8 +34,8 @@ func (m *ExpzConfig) Validate() (Experiments, error) {
 			return emptyExperiments, fmt.Errorf("error determining type of flag %s: %v", flag.Name, err)
 		}
 		definedFlags[flag.Name] = fType
-		// Store this value in our compressed experiments structure.
-		experiments.setDefault(flag.Name, flag.DefaultValue)
+		// Store this value in our mods structure.
+		mods.setDefault(flag.Name, flag.DefaultValue)
 	}
 	// Validate experiment configuration against the set of known flags.
 	for _, exp := range m.ExperimentalFeatures {
@@ -54,6 +54,9 @@ func (m *ExpzConfig) Validate() (Experiments, error) {
 		if exp.Mods.Max < exp.Mods.Min {
 			return emptyExperiments, fmt.Errorf("experiment %s mods misconfigured: min must be less less than or equal to max", exp.Name)
 		}
+		if exp.Features == nil || len(exp.Features.Flags) == 0 {
+			continue
+		}
 		for name, flag := range exp.Features.Flags {
 			definedFlagType, exists := definedFlags[name]
 			if !exists {
@@ -69,11 +72,11 @@ func (m *ExpzConfig) Validate() (Experiments, error) {
 			if experimentalFlags.rangeContains(name, int(exp.Mods.Min), int(exp.Mods.Max)) {
 				return emptyExperiments, fmt.Errorf("experiment %s flag %s overrides flag defined in a mod overwritten by a previous experiment", exp.Name, name)
 			}
-			// Store this value in our compressed experiments structure.
-			experiments.setRange(name, int(exp.Mods.Min), int(exp.Mods.Max), flag)
+			// Store this value in our compressed mods structure.
+			mods.setRange(name, int(exp.Mods.Min), int(exp.Mods.Max), flag)
 			// Store this value in our collection of experiment-overriden flags.
 			experimentalFlags.setRange(name, int(exp.Mods.Min), int(exp.Mods.Max), flag)
 		}
 	}
-	return experiments, nil
+	return mods, nil
 }

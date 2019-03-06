@@ -20,14 +20,14 @@ const (
 type userzServer struct {
 	cookiePasscode string
 	storage        Storage
-	logz           *logz.Client
-	expz           *expz.Client
+	logz           logz.Client
+	expz           expz.Client
 }
 
 type deps struct {
 	frame *logz.Frame
-	exps  *expz.ExperimentFlags
-	log   *logz.DeferredLog
+	exps  expz.ExperimentFlags
+	log   logz.DeferredLog
 }
 
 var (
@@ -42,7 +42,7 @@ func registerExpzStatusz() {
 	})
 }
 
-func NewUserzServer(cookiePasscode string, storage Storage, logz *logz.Client, expz *expz.Client) UserzServiceServer {
+func NewUserzServer(cookiePasscode string, storage Storage, logz logz.Client, expz expz.Client) UserzServiceServer {
 	registerExpzStatusz()
 	return &userzServer{
 		cookiePasscode: cookiePasscode,
@@ -67,7 +67,7 @@ func (s *userzServer) getDeps(requestContext context.Context, operation string, 
 		s.logz.Errorf(frame, "unable to update frame: %v", err)
 		return nil, errors.Wrap(err, "unable to update frame")
 	}
-	var exps *expz.ExperimentFlags
+	var exps expz.ExperimentFlags
 	if cookie != "" {
 		exps, err = s.expz.GetExperiments(expzCtx, cookie)
 		if err != nil {

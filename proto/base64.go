@@ -6,12 +6,12 @@ import (
 )
 
 // DeserializeProtoBase64 deserializes a base-64 encoded string into a target Message.
-func DeserializeProtoBase64(s string, pb proto.Message)error {
+func DeserializeProtoBase64(s string, pb proto.Message) error {
 	b, err := base64.RawStdEncoding.DecodeString(s)
 	if err != nil {
-		return  err
+		return err
 	}
-	return  proto.Unmarshal(b, pb)
+	return proto.Unmarshal(b, pb)
 }
 
 // SerializeProtoBase64 serializes Message to a base-64 encoded string.

@@ -3,6 +3,7 @@ package logz
 import (
 	"context"
 	"errors"
+	"fmt"
 	spb "github.com/explodes/serving/proto"
 	"github.com/satori/go.uuid"
 	"google.golang.org/grpc/metadata"
@@ -55,10 +56,12 @@ func FrameForOutgoingContext(parent *Frame, operationName string) *Frame {
 // outgoing RPCs as a parent.
 func FrameFromIncomingContext(ctx context.Context) (*Frame, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
+	fmt.Println("TEST",md )
 	if !ok {
 		return nil, nil
 	}
 	serializedFrame, ok := md[frameMetadataKey]
+	fmt.Println("TEST", serializedFrame)
 	if !ok || len(serializedFrame) == 0 {
 		return nil, nil
 	}

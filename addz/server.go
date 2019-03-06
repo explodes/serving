@@ -23,12 +23,12 @@ func registerAddzStatusz() {
 }
 
 type addzServer struct {
-	expz  *expz.Client
-	logz  *logz.Client
-	userz *userz.Client
+	expz  expz.Client
+	logz  logz.Client
+	userz userz.Client
 }
 
-func NewAddzServer(logz *logz.Client, expz *expz.Client, userz *userz.Client) AddzServiceServer {
+func NewAddzServer(logz logz.Client, expz expz.Client, userz userz.Client) AddzServiceServer {
 	registerAddzStatusz()
 	return &addzServer{
 		expz:  expz,
@@ -39,8 +39,8 @@ func NewAddzServer(logz *logz.Client, expz *expz.Client, userz *userz.Client) Ad
 
 type deps struct {
 	frame *logz.Frame
-	exps  *expz.ExperimentFlags
-	log   *logz.DeferredLog
+	exps  expz.ExperimentFlags
+	log   logz.DeferredLog
 }
 
 func (s *addzServer) getDeps(requestContext context.Context, operation string, cookie string) (*deps, error) {

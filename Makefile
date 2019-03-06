@@ -10,6 +10,13 @@ clean:
 	rm **/**.pb.go
 
 mocks:
-	mockgen -destination expz/mock_service_pb_test.go -package expz github.com/explodes/serving/expz ExpzServiceClient
+	mockgen -destination expz/mock_expz/mock_service.pb.go github.com/explodes/serving/expz ExpzServiceClient,Client
+	mockgen -destination logz/mock_logz/mock_service.pb.go github.com/explodes/serving/logz LogzServiceClient,Client
+	mockgen -destination userz/mock_userz/mock_service.pb.go github.com/explodes/serving/userz UserzServiceClient,Client
+
+test:
+	./runtests.sh
+
+gen: proto mocks
 
 .PHONY: proto

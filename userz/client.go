@@ -5,18 +5,23 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Client struct {
+type Client interface {
+	Login(ctx context.Context, username, password string) (cookie string, err error)
+	Validate(ctx context.Context, cookie string) (bool, error)
+}
+
+type clientImpl struct {
 	userz UserzServiceClient
 }
 
-func NewClient(userz UserzServiceClient) *Client {
-	client := &Client{
+func NewClient(userz UserzServiceClient) Client {
+	client := &clientImpl{
 		userz: userz,
 	}
 	return client
 }
 
-func (c *Client) Login(ctx context.Context, username, password string) (cookie string, err error) {
+func (c *clientImpl) Login(ctx context.Context, username, password string) (cookie string, err error) {
 	req := &LoginRequest{
 		Username: username,
 		Password: password,
@@ -40,7 +45,7 @@ func (c *Client) Login(ctx context.Context, username, password string) (cookie s
 	}
 }
 
-func (c *Client) Validate(ctx context.Context, cookie string) (bool, error) {
+func (c *clientImpl) Validate(ctx context.Context, cookie string) (bool, error) {
 	res, err := c.userz.Validate(ctx, &ValidateRequest{Cookie: cookie})
 	if err != nil {
 		return false, errors.Wrap(err, "error validating user")
