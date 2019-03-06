@@ -5,7 +5,7 @@ import (
 	"github.com/explodes/serving"
 	"github.com/explodes/serving/addz"
 	"github.com/explodes/serving/expz"
-	"github.com/explodes/serving/jsonpb"
+	"github.com/explodes/serving/jsonz"
 	"github.com/explodes/serving/logz"
 	"github.com/explodes/serving/statusz"
 	"github.com/explodes/serving/userz"
@@ -61,7 +61,7 @@ func main() {
 		go func() {
 			log.Printf("Serving JSON at http://%s...\n", config.JsonBindAddress.Address())
 			log.Printf("Serving status page at http://%s/statusz\n", config.JsonBindAddress.Address())
-			if err := jsonpb.ServeJson(config.JsonBindAddress, addzServer, statuszServer); err != nil {
+			if err := jsonz.ServeJson(config.JsonBindAddress, addzServer, statuszServer); err != nil {
 				log.Printf("error serving json: %v", err)
 			}
 		}()

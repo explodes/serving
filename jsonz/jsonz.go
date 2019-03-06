@@ -1,4 +1,4 @@
-package jsonpb
+package jsonz
 
 import (
 	spb "github.com/explodes/serving/proto"
@@ -10,6 +10,12 @@ import (
 )
 
 func ServeJson(httpAddr *spb.Address, servers ...interface{}) error {
+	server := createServer(httpAddr, servers...)
+	utilz.RegisterGracefulShutdownHttpServer("json-server", server)
+	return server.ListenAndServe()
+}
+
+func createServer(httpAddr *spb.Address, servers ...interface{}) *http.Server {
 	var muxs []*http.ServeMux
 	for _, server := range servers {
 		mux := grpcj.Mux(server, grpcj.Middleware(handlers.CORS()))
@@ -21,7 +27,7 @@ func ServeJson(httpAddr *spb.Address, servers ...interface{}) error {
 	mux := CombineMux(muxs...)
 	server := &http.Server{Addr: httpAddr.Address(), Handler: mux}
 	utilz.RegisterGracefulShutdownHttpServer("json-server", server)
-	return server.ListenAndServe()
+	return server
 }
 
 func CombineMux(muxs ...*http.ServeMux) http.Handler {
