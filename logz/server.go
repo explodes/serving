@@ -3,15 +3,17 @@ package logz
 import (
 	"context"
 	"github.com/explodes/serving/statusz"
+	"sync"
 )
 
 var _ LogzServiceServer = (*logzServer)(nil)
 
 var (
+	registerOnce = &sync.Once{}
 	varRecord = statusz.NewRateTracker("Record")
 )
 
-func registerLogzStatusz() {
+func registerServerVars() {
 	statusz.Register("Logz", statusz.VarGroup{
 		varRecord,
 	})
@@ -27,7 +29,7 @@ func NewLogzServer(config *ServiceConfig) LogzServiceServer {
 }
 
 func NewLogzServerBackend(backend Backend) LogzServiceServer {
-	registerLogzStatusz()
+	registerOnce.Do(registerServerVars)
 	return &logzServer{
 		backend: backend,
 	}

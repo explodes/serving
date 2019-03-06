@@ -18,6 +18,6 @@ func (c *Counter) Increment() {
 	c.count++
 }
 
-func (c *Counter) Marshal() (*Metric, error) {
+func (c *Counter) MarshalMetric() (*Metric, error) {
 	return &Metric{Name: c.name, Value: &Metric_U64{U64: c.count}}, nil
 }

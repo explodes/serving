@@ -7,6 +7,10 @@ import (
 	"log"
 )
 
+const (
+	tagBuildResponse = "BuildResponse"
+)
+
 type Client interface {
 	Debug(frame *Frame, message string)
 	Debugf(frame *Frame, message string, args ...interface{})
@@ -108,7 +112,7 @@ func (c *clientImpl) queueEntry(frame *Frame, entry *Entry) {
 }
 
 func (c *clientImpl) DeferRequestLog(frame *Frame) DeferredLog {
-	return c.Defer(frame, Level_INFO, "BuildResponse")
+	return c.Defer(frame, Level_INFO, tagBuildResponse)
 }
 
 func (c *clientImpl) Defer(frame *Frame, level Level, message string) DeferredLog {

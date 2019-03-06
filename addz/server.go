@@ -7,15 +7,17 @@ import (
 	"github.com/explodes/serving/statusz"
 	"github.com/explodes/serving/userz"
 	"github.com/pkg/errors"
+	"sync"
 	"time"
 )
 
 var (
+	registerOnce      = &sync.Once{}
 	varAdd      = statusz.NewRateTracker("Add")
 	varSubtract = statusz.NewRateTracker("Subtract")
 )
 
-func registerAddzStatusz() {
+func registerServerVars() {
 	statusz.Register("Addz", statusz.VarGroup{
 		varAdd,
 		varSubtract,
@@ -29,7 +31,7 @@ type addzServer struct {
 }
 
 func NewAddzServer(logz logz.Client, expz expz.Client, userz userz.Client) AddzServiceServer {
-	registerAddzStatusz()
+	registerOnce.Do(registerServerVars)
 	return &addzServer{
 		expz:  expz,
 		logz:  logz,

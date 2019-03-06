@@ -6,6 +6,7 @@ import (
 	"github.com/explodes/serving/statusz"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
+	"sync"
 )
 
 type expzServer struct {
@@ -14,17 +15,18 @@ type expzServer struct {
 }
 
 var (
+	registerOnce      = &sync.Once{}
 	varGetExperiments = statusz.NewRateTracker("GetExperiments")
 )
 
-func registerExpzStatusz() {
+func registerServerVars() {
 	statusz.Register("Expz", statusz.VarGroup{
 		varGetExperiments,
 	})
 }
 
 func NewExpzServer(logz logz.Client, mods ModFlags) ExpzServiceServer {
-	registerExpzStatusz()
+	registerOnce.Do(registerServerVars)
 	return &expzServer{
 		logz: logz,
 		mods: mods,
@@ -39,6 +41,7 @@ func (s *expzServer) GetExperiments(ctx context.Context, req *GetExperimentsRequ
 		return nil, errors.Wrap(err, "unable to read incoming frame")
 	}
 	frame = logz.FrameForOutgoingContext(frame, "Expz.GetExperiments")
+	//spew.Dump(s.logz)
 	defer s.logz.DeferRequestLog(frame).Send()
 
 	hash, err := spb.CookieHash(req.Cookie)

@@ -8,7 +8,7 @@ func init() {
 
 type systemVar struct{}
 
-func (systemVar) Marshal() ([]*Metric, error) {
+func (systemVar) MarshalMetrics() ([]*Metric, error) {
 	ms := &runtime.MemStats{}
 	runtime.ReadMemStats(ms)
 	metrics := []*Metric{

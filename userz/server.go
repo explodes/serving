@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
+	"sync"
 	"time"
 )
 
@@ -31,11 +32,12 @@ type deps struct {
 }
 
 var (
+	registerOnce = &sync.Once{}
 	varValidate = statusz.NewRateTracker("Validate")
 	varLogin    = statusz.NewRateTracker("Login")
 )
 
-func registerExpzStatusz() {
+func registerServerVars() {
 	statusz.Register("Userz", statusz.VarGroup{
 		varValidate,
 		varLogin,
@@ -43,7 +45,7 @@ func registerExpzStatusz() {
 }
 
 func NewUserzServer(cookiePasscode string, storage Storage, logz logz.Client, expz expz.Client) UserzServiceServer {
-	registerExpzStatusz()
+	registerOnce.Do(registerServerVars)
 	return &userzServer{
 		cookiePasscode: cookiePasscode,
 		storage:        storage,

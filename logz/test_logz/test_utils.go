@@ -3,6 +3,7 @@
 package test_logz
 
 import (
+	"github.com/explodes/serving/logz"
 	"github.com/explodes/serving/logz/mock_logz"
 	"github.com/golang/mock/gomock"
 )
@@ -10,6 +11,10 @@ import (
 type noopDeferredLog struct{}
 
 func (d *noopDeferredLog) Send() {}
+
+func NoopDeferredLog() logz.DeferredLog {
+	return &noopDeferredLog{}
+}
 
 func NoopLogzClient(ctrl *gomock.Controller) *mock_logz.MockClient {
 	mockLogz := mock_logz.NewMockClient(ctrl)
@@ -21,7 +26,7 @@ func NoopLogzClient(ctrl *gomock.Controller) *mock_logz.MockClient {
 	mockLogz.EXPECT().Warnf(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	mockLogz.EXPECT().Error(gomock.Any(), gomock.Any()).AnyTimes()
 	mockLogz.EXPECT().Errorf(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	mockLogz.EXPECT().DeferRequestLog(gomock.Any()).Return(&noopDeferredLog{}).AnyTimes()
-	mockLogz.EXPECT().Defer(gomock.Any(), gomock.Any(), gomock.Any()).Return(&noopDeferredLog{}).AnyTimes()
+	mockLogz.EXPECT().DeferRequestLog(gomock.Any()).Return(NoopDeferredLog()).AnyTimes()
+	mockLogz.EXPECT().Defer(gomock.Any(), gomock.Any(), gomock.Any()).Return(NoopDeferredLog()).AnyTimes()
 	return mockLogz
 }

@@ -10,6 +10,11 @@ var (
 	varRegistry     = make(varRegistryMap, 0, 16)
 )
 
+type namedVar struct {
+	name string
+	v    Var
+}
+
 func Register(name string, v Var) {
 	varRegistryLock.Lock()
 	if varRegistry.exists(name) {
@@ -17,11 +22,6 @@ func Register(name string, v Var) {
 	}
 	varRegistry = append(varRegistry, namedVar{name: name, v: v})
 	varRegistryLock.Unlock()
-}
-
-type namedVar struct {
-	name string
-	v    Var
 }
 
 type varRegistryMap []namedVar

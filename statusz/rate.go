@@ -33,7 +33,7 @@ func NewRateTracker(name string) *RateTracker {
 	}
 }
 
-func (r *RateTracker) Marshal() ([]*Metric, error) {
+func (r *RateTracker) MarshalMetrics() ([]*Metric, error) {
 	count, avgDuration := r.stats()
 	return []*Metric{
 		{Name: fmt.Sprintf("%s.count", r.name), Value: &Metric_U64{U64: count}},

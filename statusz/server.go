@@ -4,13 +4,15 @@ import (
 	"fmt"
 	spb "github.com/explodes/serving/proto"
 	"golang.org/x/net/context"
+	"sync"
 )
 
 var (
+	registerOnce = &sync.Once{}
 	varGetStatus = NewRateTracker("GetStatus")
 )
 
-func registerStatuszStatusz() {
+func registerServerVars() {
 	Register("Statusz", VarGroup{
 		varGetStatus,
 	})
@@ -19,7 +21,7 @@ func registerStatuszStatusz() {
 type statuszServer struct{}
 
 func NewStatuszServer() StatuszServiceServer {
-	registerStatuszStatusz()
+	registerOnce.Do(registerServerVars)
 	return &statuszServer{}
 }
 
@@ -44,7 +46,7 @@ func collectMetricGroups() ([]*MetricGroup, error) {
 	for _, namedVar := range varRegistry {
 		name := namedVar.name
 		v := namedVar.v
-		metrics, err := v.Marshal()
+		metrics, err := v.MarshalMetrics()
 		if err != nil {
 			return nil, fmt.Errorf("error marshalling metric %s: %v", name, err)
 		}

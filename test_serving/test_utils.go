@@ -1,6 +1,6 @@
 // +build testing
 
-package test_utils
+package test_serving
 
 import (
 	"context"
