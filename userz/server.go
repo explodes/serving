@@ -170,7 +170,7 @@ func (s *userzServer) serializeCookie(cookie *spb.Cookie) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "error serializing cookie")
 	}
-	serial, err := utilz.EncryptString(b, s.cookiePasscode)
+	serial, err := utilz.EncryptToBase64String(b, s.cookiePasscode)
 	if err != nil {
 		return "", errors.Wrap(err, "error encrypting cookie")
 	}
@@ -178,7 +178,7 @@ func (s *userzServer) serializeCookie(cookie *spb.Cookie) (string, error) {
 }
 
 func (s *userzServer) deserializeCookie(serial string) (*spb.Cookie, error) {
-	b, err := utilz.DecryptString(serial, s.cookiePasscode)
+	b, err := utilz.DecryptFromBase64String(serial, s.cookiePasscode)
 	if err != nil {
 		return nil, errors.Wrap(err, "error decrypting cookie")
 	}

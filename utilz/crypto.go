@@ -30,7 +30,7 @@ func Encrypt(data []byte, passphrase string) ([]byte, error) {
 	return cipherText, nil
 }
 
-func EncryptString(data []byte, passphrase string) (string, error) {
+func EncryptToBase64String(data []byte, passphrase string) (string, error) {
 	b, err := Encrypt(data, passphrase)
 	if err != nil {
 		return "", err
@@ -57,7 +57,7 @@ func Decrypt(data []byte, passphrase string) ([]byte, error) {
 	return plainText, nil
 }
 
-func DecryptString(s string, passphrase string) ([]byte, error) {
+func DecryptFromBase64String(s string, passphrase string) ([]byte, error) {
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
 		return nil, err
