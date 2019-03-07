@@ -23,3 +23,5 @@ func SerializeProtoBase64(pb proto.Message) (string, error) {
 	s := base64.RawStdEncoding.EncodeToString(b)
 	return s, nil
 }
+
+
