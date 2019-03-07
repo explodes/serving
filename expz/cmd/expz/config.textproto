@@ -11,6 +11,9 @@ logz_server {
     host: "0.0.0.0"
     port: 4001
   }
+  enable_gzip: true
+  exponential_backoff {
+  }
 }
 default_features {
   name: "extra_addition"

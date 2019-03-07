@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package serving;
 
+import "proto/time.proto";
+
 option go_package = "github.com/explodes/serving/proto";
 
 message Address {
@@ -11,4 +13,17 @@ message Address {
 
 message GrpcServer {
   Address address = 1;
+
+  message ExponentialBackoff {
+    // Override the max delay of the exponential backoff.
+    // By default, this value is 20 seconds.
+    Duration override_max_delay = 1;
+  }
+  // If specified, use an exponential backoff strategy with a
+  // default maximum delay of 20 seconds.
+  ExponentialBackoff exponential_backoff = 2;
+
+  // If specified, gzip will be used using a compression level
+  // optimized for speed.
+  bool enable_gzip = 3;
 }

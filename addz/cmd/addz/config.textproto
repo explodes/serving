@@ -11,16 +11,25 @@ logz_server{
     host: "0.0.0.0"
     port: 4001
   }
+  enable_gzip: true
+  exponential_backoff {
+  }
 }
 expz_server {
   address {
     host: "0.0.0.0"
     port: 4002
   }
+  enable_gzip: true
+  exponential_backoff {
+  }
 }
 userz_server {
   address {
     host: "0.0.0.0"
     port: 4004
+  }
+  enable_gzip: true
+  exponential_backoff {
   }
 }
