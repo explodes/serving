@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	rateHistorySize = 1000
+	RateHistorySize = 1000
 )
 
 type Ender interface {
@@ -91,14 +91,14 @@ type timeframe struct {
 
 type timeframeRing struct {
 	size, offset int
-	timeframes   [rateHistorySize]timeframe
+	timeframes   [RateHistorySize]timeframe
 }
 
 func newTimeframeRing() *timeframeRing {
 	return &timeframeRing{
 		size:       0,
 		offset:     0,
-		timeframes: [rateHistorySize]timeframe{},
+		timeframes: [RateHistorySize]timeframe{},
 	}
 }
 
@@ -107,10 +107,10 @@ func (r *timeframeRing) len() int {
 }
 
 func (r *timeframeRing) put(t timeframe) {
-	if r.size < rateHistorySize {
+	if r.size < RateHistorySize {
 		r.size++
 	}
-	index := r.offset % rateHistorySize
+	index := r.offset % RateHistorySize
 	r.timeframes[index] = t
 	r.offset = index + 1
 }
