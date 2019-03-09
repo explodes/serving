@@ -7,10 +7,9 @@ import (
 )
 
 func TestTimestampNow(t *testing.T) {
-	ts := TimestampNow()
+	tsNanos := TimestampNow().Time().UnixNano()
 	now := time.Now()
-	tsNanos := ts.Time().UnixNano()
-	assert.True(t, tsNanos > now.UnixNano()-1000)
+	assert.True(t, tsNanos-now.UnixNano() < 1000)
 }
 
 func TestTimestampTime(t *testing.T) {
@@ -36,7 +35,6 @@ func TestTimestamp_Time_Seconds(t *testing.T) {
 	nanos := ts.Time().UnixNano()
 	assert.Equal(t, int64(100*time.Second), nanos)
 }
-
 
 func TestTimestamp_Time_Nil(t *testing.T) {
 	ts := &Timestamp{Unit: nil}

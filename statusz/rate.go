@@ -3,15 +3,15 @@ package statusz
 import (
 	"fmt"
 	spb "github.com/explodes/serving/proto"
+	"github.com/explodes/serving/utilz"
 	"sync"
-	"time"
 )
 
 const (
 	rateHistorySize = 1000
 )
 
-type EndTimeLogger interface {
+type Ender interface {
 	End()
 }
 
@@ -19,18 +19,25 @@ var _ Var = (*RateTracker)(nil)
 
 type RateTracker struct {
 	mu         *sync.RWMutex
+	clock      utilz.Clock
 	name       string
 	count      uint64
-	timeframes *timeframeRingBuffer
+	timeframes *timeframeRing
 }
 
 func NewRateTracker(name string) *RateTracker {
+	return NewRateTrackerClock(name, utilz.NewClock())
+}
+
+func NewRateTrackerClock(name string, clock utilz.Clock) *RateTracker {
 	return &RateTracker{
 		mu:         &sync.RWMutex{},
+		clock:      clock,
 		name:       name,
 		count:      0,
-		timeframes: newTimeframeRingBuffer(),
+		timeframes: newTimeframeRing(),
 	}
+
 }
 
 func (r *RateTracker) MarshalMetrics() ([]*Metric, error) {
@@ -41,10 +48,10 @@ func (r *RateTracker) MarshalMetrics() ([]*Metric, error) {
 	}, nil
 }
 
-func (r *RateTracker) Start() EndTimeLogger {
+func (r *RateTracker) Start() Ender {
 	return &deferredRateLogger{
 		r:     r,
-		start: time.Now().UnixNano(),
+		start: r.clock.Now().UnixNano(),
 	}
 }
 
@@ -55,19 +62,23 @@ func (r *RateTracker) record(start, end int64) {
 	r.mu.Unlock()
 }
 
-func (r *RateTracker) stats() (count uint64, avgDuration float64) {
+func (r *RateTracker) stats() (count uint64, avgDuration int64) {
 	r.mu.RLock()
+
+	// Calculate the count.
 	count = r.count
 
-	if r.timeframes.len() == 0 {
+	// Calculate the average duration of the last N timeframes.
+	N := r.timeframes.len()
+	if N == 0 {
 		avgDuration = 0
 	} else {
 		sumDiff := int64(0)
-		for i := 0; i < r.timeframes.len(); i++ {
+		for i := 0; i < N; i++ {
 			tf := r.timeframes.timeframes[i]
 			sumDiff += tf.end - tf.start
 		}
-		avgDuration = float64(sumDiff) / float64(r.timeframes.len())
+		avgDuration = sumDiff / int64(N)
 	}
 
 	r.mu.RUnlock()
@@ -78,24 +89,24 @@ type timeframe struct {
 	start, end int64
 }
 
-type timeframeRingBuffer struct {
+type timeframeRing struct {
 	size, offset int
 	timeframes   [rateHistorySize]timeframe
 }
 
-func newTimeframeRingBuffer() *timeframeRingBuffer {
-	return &timeframeRingBuffer{
+func newTimeframeRing() *timeframeRing {
+	return &timeframeRing{
 		size:       0,
 		offset:     0,
 		timeframes: [rateHistorySize]timeframe{},
 	}
 }
 
-func (r *timeframeRingBuffer) len() int {
+func (r *timeframeRing) len() int {
 	return r.size
 }
 
-func (r *timeframeRingBuffer) put(t timeframe) {
+func (r *timeframeRing) put(t timeframe) {
 	if r.size < rateHistorySize {
 		r.size++
 	}
@@ -104,7 +115,7 @@ func (r *timeframeRingBuffer) put(t timeframe) {
 	r.offset = index + 1
 }
 
-var _ EndTimeLogger = (*deferredRateLogger)(nil)
+var _ Ender = (*deferredRateLogger)(nil)
 
 type deferredRateLogger struct {
 	r     *RateTracker
@@ -112,6 +123,6 @@ type deferredRateLogger struct {
 }
 
 func (d *deferredRateLogger) End() {
-	now := time.Now().UnixNano()
+	now := d.r.clock.Now().UnixNano()
 	d.r.record(d.start, now)
 }
