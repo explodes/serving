@@ -3,6 +3,7 @@
 package test_utilz
 
 import (
+	spb "github.com/explodes/serving/proto"
 	"github.com/explodes/serving/utilz"
 	"time"
 )
@@ -16,13 +17,18 @@ type TestClock struct {
 // NewTestClock creates a clock used for testing starting t=0.
 func NewTestClock() *TestClock {
 	return &TestClock{
-		t: time.Time{},
+		t: time.Unix(0, 0),
 	}
 }
 
-// Now returns the current time of the clock.
+// Now gets the current time on the clock.
 func (c *TestClock) Now() time.Time {
 	return c.t
+}
+
+// Timestamp gets a Timestamp of the current time.
+func (c *TestClock) Timestamp() *spb.Timestamp {
+	return spb.TimestampTime(c.Now())
 }
 
 // Add increases the time of the clock.

@@ -17,11 +17,12 @@ type namedVar struct {
 
 func Register(name string, v Var) {
 	varRegistryLock.Lock()
+	defer varRegistryLock.Unlock()
 	if varRegistry.exists(name) {
 		panic(fmt.Errorf("a var with name %s is already registered", name))
 	}
 	varRegistry = append(varRegistry, namedVar{name: name, v: v})
-	varRegistryLock.Unlock()
+
 }
 
 type varRegistryMap []namedVar

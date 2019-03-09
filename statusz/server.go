@@ -2,27 +2,38 @@ package statusz
 
 import (
 	"fmt"
-	spb "github.com/explodes/serving/proto"
+	"github.com/explodes/serving/utilz"
 	"golang.org/x/net/context"
 	"sync"
 )
 
 var (
-	registerOnce = &sync.Once{}
-	varGetStatus = NewRateTracker("GetStatus")
+	registerOnce              = &sync.Once{}
+	varGetStatus *RateTracker = nil
 )
 
-func registerServerVars() {
+func registerServerVars(clock utilz.Clock) {
+	varGetStatus = NewRateTrackerClock("GetStatus", clock)
 	Register("Statusz", VarGroup{
 		varGetStatus,
 	})
 }
 
-type statuszServer struct{}
+type statuszServer struct {
+	clock utilz.Clock
+}
 
 func NewStatuszServer() StatuszServiceServer {
-	registerOnce.Do(registerServerVars)
-	return &statuszServer{}
+	return NewStatuszServerClock(utilz.NewClock())
+}
+
+func NewStatuszServerClock(clock utilz.Clock) StatuszServiceServer {
+	registerOnce.Do(func() {
+		registerServerVars(clock)
+	})
+	return &statuszServer{
+		clock: clock,
+	}
 }
 
 func (s *statuszServer) GetStatus(ctx context.Context, req *GetStatusRequest) (*GetStatusResponse, error) {
@@ -34,7 +45,7 @@ func (s *statuszServer) GetStatus(ctx context.Context, req *GetStatusRequest) (*
 	}
 	res := &GetStatusResponse{
 		Status: &Status{
-			Timestamp: spb.TimestampNow(),
+			Timestamp: s.clock.Timestamp(),
 			Groups:    groups,
 		},
 	}

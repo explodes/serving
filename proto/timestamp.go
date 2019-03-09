@@ -1,6 +1,8 @@
 package proto
 
-import "time"
+import (
+	"time"
+)
 
 func TimestampNow() *Timestamp {
 	return TimestampTime(time.Now())
