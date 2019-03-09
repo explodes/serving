@@ -6,13 +6,6 @@ import (
 	"testing"
 )
 
-type noopVar struct {
-}
-
-func (noopVar) MarshalMetrics() ([]*statusz.Metric, error) {
-	return nil, nil
-}
-
 func TestRegister_duplicate(t *testing.T) {
 	v := noopVar{}
 	statusz.Register("foo", v)
