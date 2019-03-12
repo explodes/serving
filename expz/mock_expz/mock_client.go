@@ -8,13 +8,20 @@ import (
 var _ expz.Client = (*SettableMockClient)(nil)
 
 type SettableMockClient struct {
-	m map[string]*expz.Flag
+	m   map[string]*expz.Flag
+	err error
 }
 
 func NewSettableMockClient() *SettableMockClient {
 	return &SettableMockClient{
-		m: make(map[string]*expz.Flag),
+		m:   make(map[string]*expz.Flag),
+		err: nil,
 	}
+}
+
+func (m *SettableMockClient) SetError(err error) *SettableMockClient {
+	m.err = err
+	return m
 }
 
 func (m *SettableMockClient) SetFlag(name string, flag *expz.Flag) *SettableMockClient {
@@ -39,5 +46,5 @@ func (m *SettableMockClient) SetFlagBool(name string, value bool) *SettableMockC
 }
 
 func (m *SettableMockClient) GetExperiments(ctx context.Context, cookie string) (expz.ExperimentFlags, error) {
-	return m.m, nil
+	return m.m, m.err
 }

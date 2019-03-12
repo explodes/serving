@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	registerOnce      = &sync.Once{}
-	varAdd      = statusz.NewRateTracker("Add")
-	varSubtract = statusz.NewRateTracker("Subtract")
+	registerOnce = &sync.Once{}
+	varAdd       = statusz.NewRateTracker("Add")
+	varSubtract  = statusz.NewRateTracker("Subtract")
 )
 
 func registerServerVars() {
@@ -114,19 +114,16 @@ func (s *addzServer) Subtract(requestContext context.Context, req *SubtractReque
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		if deps == nil {
-			panic("nil deps")
-		}
-		if deps.log == nil {
-			panic("nil log")
-		}
-		deps.log.Send()
-	}()
+	defer deps.log.Send()
 
 	var sum int64
-	for _, v := range req.Values {
-		sum -= v
+	if len(req.Values) == 0 {
+		sum = 0
+	} else {
+		sum = req.Values[0]
+		for i := 1; i < len(req.Values); i++ {
+			sum -= req.Values[i]
+		}
 	}
 
 	res := &SubtractResponse{
