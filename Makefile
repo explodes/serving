@@ -10,9 +10,12 @@ clean:
 	rm **/**.pb.go
 
 mocks:
-	mockgen -destination expz/mock_expz/mock_service.pb.go github.com/explodes/serving/expz ExpzServiceClient,Client
-	mockgen -destination logz/mock_logz/mock_service.pb.go github.com/explodes/serving/logz LogzServiceClient,Client
-	mockgen -destination userz/mock_userz/mock_service.pb.go github.com/explodes/serving/userz UserzServiceClient,Client
+	mockgen -destination expz/mock_expz/mock_service_client.pb.gen.go github.com/explodes/serving/expz ExpzServiceClient
+	mockgen -destination logz/mock_logz/mock_service_client.pb.gen.go github.com/explodes/serving/logz LogzServiceClient
+	mockgen -destination logz/mock_logz/mock_client.gen.go github.com/explodes/serving/logz Client
+	mockgen -destination userz/mock_userz/mock_service_client.pb.gen.go github.com/explodes/serving/userz UserzServiceClient
+	mockgen -destination userz/mock_userz/mock_client.gen.go github.com/explodes/serving/userz Client
+	mockgen -destination userz/mock_userz/mock_storage.gen.go github.com/explodes/serving/userz Storage
 
 test:
 	./runtests.sh

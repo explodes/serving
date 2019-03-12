@@ -2,6 +2,7 @@ package serving
 
 import (
 	"github.com/golang/protobuf/proto"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -17,15 +18,16 @@ func ReadConfigFile(configPath string, pb proto.Message) error {
 			log.Printf("error closing config file: %v", err)
 		}
 	}()
+	return ReadConfig(f, pb)
+}
 
-	b, err := ioutil.ReadAll(f)
+func ReadConfig(r io.Reader, pb proto.Message) error {
+	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return err
 	}
-
 	if err := proto.UnmarshalText(string(b), pb); err != nil {
 		return err
 	}
-
 	return nil
 }

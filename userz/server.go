@@ -177,18 +177,6 @@ func (s *userzServer) serializeCookie(cookie *spb.Cookie) (string, error) {
 	return serial, nil
 }
 
-func (s *userzServer) deserializeCookie(serial string) (*spb.Cookie, error) {
-	b, err := utilz.DecryptFromBase64String(serial, s.cookiePasscode)
-	if err != nil {
-		return nil, errors.Wrap(err, "error decrypting cookie")
-	}
-	cookie := &spb.Cookie{}
-	if err := proto.Unmarshal(b, cookie); err != nil {
-		return nil, errors.Wrap(err, "error unmarshalling cookie")
-	}
-	return cookie, nil
-}
-
 func getUuid() string {
 	id, err := uuid.NewV4()
 	if err != nil {
